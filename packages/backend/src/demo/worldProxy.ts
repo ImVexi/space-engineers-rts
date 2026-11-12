@@ -5,9 +5,10 @@ import { DemoHttpError, type DemoRoute } from './routes.js';
  * GET-only proxy to an optional world-geometry service.
  *
  * The service publishes terrain height fields and block-shape models for a
- * world in the SETR/SEMAP format. It is a SEPARATE program, not part of this
- * repository: point RTS_TELEMETRY_TEST_BASE at it, or leave it unset and the
- * map falls back to an approximate planet shell with no terrain occlusion.
+ * world. It is a SEPARATE program, not part of this repository and not
+ * distributed with it: point RTS_TELEMETRY_TEST_BASE at it, or leave it unset
+ * and the map falls back to an approximate planet shell with no terrain
+ * occlusion. Everything here is optional.
  *
  * Only reads are exposed, the upstream paths are fixed (no arbitrary URL
  * proxying), and the manifest's grid asset URLs are rewritten to the demo

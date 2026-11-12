@@ -844,12 +844,12 @@ describe('T68 alerts: HTTP routes', () => {
       port,
       'POST',
       `/api/alerts/${alert.id}/ack`,
-      { by: 'vexx' },
+      { by: 'operator' },
       'token',
     );
     expect(res.status).toBe(200);
     expect(res.body.alert.state).toBe('acked');
-    expect(res.body.alert.ackedBy).toBe('vexx');
+    expect(res.body.alert.ackedBy).toBe('operator');
     expect(res.body.audit).toBe('alert_acked');
     expect(store.getAlert(alert.id)!.state).toBe('acked');
     expect(store.countAudit('alert_acked', alert.id)).toBe(1);
@@ -858,7 +858,7 @@ describe('T68 alerts: HTTP routes', () => {
       port,
       'POST',
       `/api/alerts/${alert.id}/resolve`,
-      { by: 'vexx' },
+      { by: 'operator' },
       'token',
     );
     expect(resolved.status).toBe(200);

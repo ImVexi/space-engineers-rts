@@ -135,7 +135,7 @@ export interface DesiredRecord {
 }
 
 /**
- * CONTRACT-FEATURES §4: a named, coloured set of grid ids. Membership is a
+ * Named, coloured sets of grid ids. Membership is a
  * JSON array of strings on purpose - SE grid ids exceed 2^53, so they must
  * never round-trip through a JS number. One grid may appear in several groups.
  */

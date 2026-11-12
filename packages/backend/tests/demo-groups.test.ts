@@ -62,7 +62,7 @@ async function withRuntime<T>(
   }
 }
 
-describe('demo groups (CONTRACT-FEATURES §4)', () => {
+describe('demo groups', () => {
   beforeAll(() => setDemoEnv());
   afterAll(() => restoreEnv());
   afterEach(() => clock.advance(1_000));

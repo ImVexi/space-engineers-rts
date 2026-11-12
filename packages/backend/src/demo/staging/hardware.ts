@@ -9,7 +9,7 @@
  * A hull whose per-type split is unknown (an owner-tagged grid that reports
  * mass only) gets no staging model: switching hydrogen off on a guess could
  * drop a drone. The measured owner satellite is registered explicitly because
- * its force split was read from the live grid (docs/endurance.md calibration).
+ * its force split was read from the live grid (endurance calibration).
  */
 import {
   THRUSTER_DEFINITIONS,
@@ -103,10 +103,10 @@ export function hardwareFrom(input: StagingHardwareInput): StagingHardware {
 }
 
 /**
- * Owner satellite measured on the test server (docs/endurance.md calibration):
+ * Owner satellite measured on the test server (endurance calibration):
  * 12 small atmospheric + 10 small hydrogen thrusters, 18,965.4 kg, 2 MWh of
  * battery, tank fill 39.96 %. Tank volume is the stock small tank (500,000 L)
- * and is marked ASSUMPTION in docs/staging.md; it only scales the fuel-saved
+ * and is marked ASSUMPTION in the staging model; it only scales the fuel-saved
  * percentage, not the burn rate.
  */
 export const OWNER_SATELLITE_GRID_ID = 'grid:126323015058751318';
@@ -137,7 +137,7 @@ for (const [gridId, p] of Object.entries(OWNER_SAT_PROFILES)) {
     h2TankLitres: 60_000, // 4 x 15,000 L small tanks
     h2Fill: 0.5,
     batteryFill: 1,
-    source: 'measured live profile (docs/staging.md owner satellite family)',
+    source: 'measured live profile (staging model, owner satellite family)',
   });
 }
 

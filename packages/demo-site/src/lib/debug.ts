@@ -41,7 +41,7 @@ export interface Readout {
   seaLevel: number | null
 }
 
-export interface SeMapDebug {
+export interface MapDebugState {
   ready: boolean
   /** performance.now() at first ready publish (ms since navigation) */
   readyAt: number | null
@@ -94,11 +94,11 @@ export interface SeMapDebug {
 
 declare global {
   interface Window {
-    __seMap?: SeMapDebug
+    __rtsMap?: MapDebugState
   }
 }
 
-export const debugState: SeMapDebug = {
+export const debugState: MapDebugState = {
   ready: false,
   readyAt: null,
   entityCount: 0,
@@ -148,10 +148,10 @@ export const debugState: SeMapDebug = {
 }
 
 /** Publish a snapshot for e2e assertions (read-only for tests). */
-export function publishDebug(patch: Partial<SeMapDebug>): void {
+export function publishDebug(patch: Partial<MapDebugState>): void {
   Object.assign(debugState, patch)
   if (typeof window !== 'undefined') {
-    window.__seMap = {
+    window.__rtsMap = {
       ...debugState,
       filters: { ...debugState.filters },
       lod: { ...debugState.lod },

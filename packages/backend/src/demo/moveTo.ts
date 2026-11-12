@@ -401,7 +401,7 @@ export function preflightMove(args: {
       );
       const available = thrustAtAltitude(hull, planet, targetAltitude);
       const gravity = gravityAtAltitude(planetGravity(planet), targetAltitude);
-      const requiredN = mass * Math.max(gravity, 0) * 1.3; // climb margin (docs/staging.md)
+      const requiredN = mass * Math.max(gravity, 0) * 1.3; // climb margin (staging model)
       const noFuelForceN = available.forceN.atmo + available.forceN.ion;
       const coverPct = requiredN <= 0 ? 100 : Math.round((noFuelForceN / requiredN) * 100);
       if (noFuelForceN >= requiredN) {

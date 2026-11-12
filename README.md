@@ -50,7 +50,10 @@ redistributable.
 
 ## Install
 
-### 1. Build or download the plugin
+### 1. Get the plugin
+
+Download the release zip (`HermesRts.Plugin.dll`, `plugin.json.example`,
+`INSTALL.txt`), or build it from source — see [docs/BUILDING.md](docs/BUILDING.md).
 
 ```bash
 git clone <your-fork-url> space-engineers-rts
@@ -62,7 +65,6 @@ dotnet build plugin/HermesRts.Plugin/HermesRts.Plugin.csproj -c Release
 ```
 
 Output: `plugin/HermesRts.Plugin/bin/Release/HermesRts.Plugin.dll`.
-Alternatively use a DLL attached to a GitHub release.
 
 ### 2. Install it into the dedicated server
 
@@ -161,14 +163,17 @@ powered antenna. Details and fixes: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTI
 
 ## Documentation
 
-- [docs/INSTALL.md](docs/INSTALL.md) — build, install, run, upgrade, uninstall
+- [docs/INSTALL.md](docs/INSTALL.md) — install, upgrade, uninstall
+- [docs/BUILDING.md](docs/BUILDING.md) — build the plugin, backend and site from source
 - [docs/CONFIGURATION.md](docs/CONFIGURATION.md) — every environment variable
 - [docs/IN-GAME-SETUP.md](docs/IN-GAME-SETUP.md) — tags, base, roles
 - [docs/SAFETY.md](docs/SAFETY.md) — what the system refuses and why
+- [docs/FAQ.md](docs/FAQ.md) — short answers to the usual questions
 - [docs/architecture.md](docs/architecture.md) — components and data flow
+- [docs/ship-roles.md](docs/ship-roles.md) — roles, tags, ownership
 - [docs/survival-mode.md](docs/survival-mode.md), [docs/survival-loop.md](docs/survival-loop.md)
-- [docs/ship-roles.md](docs/ship-roles.md), [docs/planner-modes.md](docs/planner-modes.md)
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md), [docs/VALIDATION.md](docs/VALIDATION.md)
+- [docs/flight-guards.md](docs/flight-guards.md), [docs/simspeed.md](docs/simspeed.md)
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 
 ## Development
 

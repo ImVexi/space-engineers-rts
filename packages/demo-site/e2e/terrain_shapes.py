@@ -175,7 +175,7 @@ def main() -> int:
         # 5) low over EarthLike: > 20 terrain tiles
         camnow = cam(page)
         altitude_km = math.dist(camnow["pos"], [0, 0, 0]) - 59.4
-        tiles = wait_for(page, "() => (window.__seMap?.terrain?.tiles ?? 0) > 20 ? window.__seMap.terrain.tiles : 0", "terrain tiles", 90)
+        tiles = wait_for(page, "() => (window.__rtsMap?.terrain?.tiles ?? 0) > 20 ? window.__rtsMap.terrain.tiles : 0", "terrain tiles", 90)
         print(f"[t14] altitude={altitude_km:.2f} km terrain tiles={tiles}")
         assert altitude_km <= 25.0, f"altitude {altitude_km:.1f} km is not a low pass"
         assert int(tiles) > 20, f"only {tiles} terrain tiles rendered"
@@ -234,7 +234,7 @@ def main() -> int:
         print(f"[t14] screenshot {SHOT}")
         print("[t14] camera dist at shot: %.2f km, tiles %s" % (
             math.dist(cam(page)["pos"], cam(page)["target"]),
-            page.evaluate("() => window.__seMap?.terrain?.tiles"),
+            page.evaluate("() => window.__rtsMap?.terrain?.tiles"),
         ))
 
         if page_errors:

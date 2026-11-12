@@ -59,14 +59,14 @@ describe('ship role tags: every spelling the owner asked for', () => {
 
 describe('role resolution: in-game tag wins, conflicts are restrictive', () => {
   it('uses the in-game tag over the site toggle and explains the source', () => {
-    const res = resolveRole({ hints: [hint('personal')], site: 'managed', siteBy: 'vex' });
+    const res = resolveRole({ hints: [hint('personal')], site: 'managed', siteBy: 'owner' });
     expect(res.role).toBe('personal');
     expect(res.roleSource).toBe('in-game-tag');
     expect(res.reason).toContain('set in game');
   });
 
   it('uses the site toggle only when no tag exists', () => {
-    const res = resolveRole({ hints: [], site: 'off', siteBy: 'vex' });
+    const res = resolveRole({ hints: [], site: 'off', siteBy: 'owner' });
     expect(res.role).toBe('off');
     expect(res.roleSource).toBe('site-toggle');
   });
@@ -123,7 +123,7 @@ describe('role resolution: in-game tag wins, conflicts are restrictive', () => {
   it('a site toggle cannot override an in-game tag, and the refusal is audited', () => {
     const s = store();
     shipRoles.noteInGame(s, [{ gridId: 'grid:2', name: 'Mine', hints: [hint('personal')] }], 10);
-    const out = shipRoles.setSiteRole(s, 'grid:2', 'managed', 'vex', 20);
+    const out = shipRoles.setSiteRole(s, 'grid:2', 'managed', 'owner', 20);
     expect(out.ok).toBe(false);
     expect(out.code).toBe('role_set_in_game');
     expect(shipRoles.roleOf('grid:2')).toBe('personal');
@@ -132,7 +132,7 @@ describe('role resolution: in-game tag wins, conflicts are restrictive', () => {
   it('a site toggle is stored server-side and audited', () => {
     const s = store();
     shipRoles.noteInGame(s, [{ gridId: 'grid:3', name: 'Tug', hints: [] }], 10);
-    const out = shipRoles.setSiteRole(s, 'grid:3', 'personal', 'vex', 20);
+    const out = shipRoles.setSiteRole(s, 'grid:3', 'personal', 'owner', 20);
     expect(out.ok).toBe(true);
     expect(shipRoles.resolution('grid:3').roleSource).toBe('site-toggle');
     expect(s.getKv('roles:site')).toContain('grid:3');

@@ -44,7 +44,7 @@ const NOW = 1_800_000_000_000;
 /** Test-only Steam ids; the shipped default is an empty allow-list. */
 const OWNER_STEAM_ID = '10000000000000001';
 const FRIEND_STEAM_ID = '10000000000000002';
-const VEX_IDENTITY = '144115188075855926';
+const OUR_IDENTITY = '144115188075855926';
 const FRIEND_IDENTITY = '144115188075855999';
 const NPC_IDENTITY = '144115188075857777';
 const TARGET = { x: 59_402_000, y: 0, z: 0 };
@@ -57,7 +57,7 @@ function livePolicy(extra: Partial<{ identityIds: string[]; factionTags: string[
   return {
     live: true,
     steamIds: extra.steamIds ?? [OWNER_STEAM_ID],
-    identityIds: new Set(extra.identityIds ?? [VEX_IDENTITY]),
+    identityIds: new Set(extra.identityIds ?? [OUR_IDENTITY]),
     factionTags: new Set((extra.factionTags ?? []).map((t) => t.toUpperCase())),
   };
 }
@@ -94,7 +94,7 @@ describe('T79 role default by environment', () => {
     const res = resolveRole({
       hints: [hint('managed', '[HERMES-MANAGED]')],
       live: true,
-      owners: [VEX_IDENTITY],
+      owners: [OUR_IDENTITY],
       policy: livePolicy(),
     });
     expect(res).toMatchObject({ role: 'managed', roleSource: 'in-game-tag' });
@@ -113,7 +113,7 @@ describe('T79 explicit managed tags', () => {
     const res = resolveRole({
       hints: parsed.map((p) => ({ ...p, source: 'custom-data' as const })),
       live: true,
-      owners: [VEX_IDENTITY],
+      owners: [OUR_IDENTITY],
       policy: livePolicy(),
     });
     expect(res.role).toBe('managed');
@@ -128,8 +128,8 @@ describe('T79 explicit managed tags', () => {
 
   it('automation can see an explicit managed tag where an untagged grid is OFF', () => {
     const taggedHints = parseRoleText('[MANAGED]').map((p) => ({ ...p, source: 'block-name' as const }));
-    const tagged = resolveRole({ hints: taggedHints, live: true, owners: [VEX_IDENTITY], policy: livePolicy() });
-    const untagged = resolveRole({ live: true, owners: [VEX_IDENTITY], policy: livePolicy() });
+    const tagged = resolveRole({ hints: taggedHints, live: true, owners: [OUR_IDENTITY], policy: livePolicy() });
+    const untagged = resolveRole({ live: true, owners: [OUR_IDENTITY], policy: livePolicy() });
     expect(tagged.role).toBe('managed');
     expect(untagged.role).toBe('off');
   });
@@ -153,7 +153,7 @@ describe('T79 ownership on the live instance', () => {
     const res = resolveRole({
       hints: [hint('managed', '[HERMES-MANAGED]')],
       live: true,
-      owners: [VEX_IDENTITY],
+      owners: [OUR_IDENTITY],
       ownerFactions: [null],
       policy: livePolicy(),
     });
@@ -166,8 +166,8 @@ describe('T79 ownership on the live instance', () => {
       hints: [hint('managed', '[HERMES-MANAGED]')],
       live: true,
       owners: [FRIEND_IDENTITY],
-      ownerFactions: ['VEX'],
-      policy: livePolicy({ factionTags: ['VEX'] }),
+      ownerFactions: ['OURFAC'],
+      policy: livePolicy({ factionTags: ['OURFAC'] }),
     });
     expect(res.role).toBe('managed');
     expect(res.ownershipDetail).toContain('your faction');
@@ -184,10 +184,10 @@ describe('T79 ownership on the live instance', () => {
   });
 
   it('fails closed: no policy, no identity, or no owner all mean not ours', () => {
-    expect(ownershipVerdict([VEX_IDENTITY], null, null, true).owned).toBe(false);
-    expect(ownershipVerdict([VEX_IDENTITY], null, livePolicy({ identityIds: [] })).owned).toBe(false);
+    expect(ownershipVerdict([OUR_IDENTITY], null, null, true).owned).toBe(false);
+    expect(ownershipVerdict([OUR_IDENTITY], null, livePolicy({ identityIds: [] })).owned).toBe(false);
     expect(ownershipVerdict([], null, livePolicy()).owned).toBe(false);
-    expect(ownershipVerdict([VEX_IDENTITY], null, livePolicy()).owned).toBe(true);
+    expect(ownershipVerdict([OUR_IDENTITY], null, livePolicy()).owned).toBe(true);
   });
 
   it('does not gate ownership on the test instance', () => {
@@ -212,13 +212,13 @@ describe('T79 owner Steam id list', () => {
     const policy = buildOwnerPolicy(
       { RTS_ENV: 'live', RTS_OWNER_STEAM_IDS: OWNER_STEAM_ID } as NodeJS.ProcessEnv,
       {
-        identityForSteam: (steam) => (steam === OWNER_STEAM_ID ? VEX_IDENTITY : null),
-        factionTagForSteam: () => 'vex',
+        identityForSteam: (steam) => (steam === OWNER_STEAM_ID ? OUR_IDENTITY : null),
+        factionTagForSteam: () => 'ourfac',
       },
     );
     expect(policy.live).toBe(true);
-    expect(policy.identityIds.has(VEX_IDENTITY)).toBe(true);
-    expect(policy.factionTags.has('VEX')).toBe(true);
+    expect(policy.identityIds.has(OUR_IDENTITY)).toBe(true);
+    expect(policy.factionTags.has('OURFAC')).toBe(true);
   });
 });
 

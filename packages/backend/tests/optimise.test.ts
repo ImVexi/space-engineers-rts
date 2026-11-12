@@ -1,6 +1,6 @@
 // These fixtures document the LEGACY radio=range+los behaviour (still reachable via
 // the flag) because that is the only mode where terrain shapes radio coverage.
-// The measured rule is radio = range-only (see docs/reality-check.md): under it a
+// The measured rule is radio = range-only (see docs/architecture.md): under it a
 // ridge changes nothing for radio, which is asserted in terrain-coverage.test.ts.
 process.env.RTS_RADIO_LOS = '1';
 

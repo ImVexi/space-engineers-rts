@@ -143,7 +143,7 @@ namespace HermesRts.Plugin
                 // VERIFY: IMySession in 01_210_014 exposes SessionSettings only;
                 // MyObjectBuilder_SessionSettings has no SimSpeed member (reflected).
                 // simSpeed is optional in the protocol, so it is omitted rather
-                // than guessed. See docs/network-state-fields.md.
+                // than guessed. See the telemetry section of docs/architecture.md.
                 _link.SendStatus(status);
             }
 

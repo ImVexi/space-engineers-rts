@@ -30,7 +30,7 @@
  *    `MyPhysics::CastRay`.
  *
  * Therefore: radio is range-limited only; lasers need line of sight. Treating
- * radio as LOS-limited over-places relays (see `docs/reality-check.md`).
+ * radio as LOS-limited over-places relays (see docs/architecture.md).
  *
  * `RTS_RADIO_LOS=1` restores the old, pessimistic rule so the two models can be
  * compared without editing code.

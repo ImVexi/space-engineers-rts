@@ -42,7 +42,7 @@ Every multi-step flight goes through the executor, which applies:
 - sim-speed gating: no new flight orders below `RTS_SIMSPEED_MIN` (0.95),
 - manual-handoff: if a player takes control, the mission stops ordering the hull.
 
-Details: [flight-guards.md](flight-guards.md) and [ground-datum.md](ground-datum.md).
+Details: [flight-guards.md](flight-guards.md).
 
 ## Failure behaviour
 

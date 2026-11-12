@@ -209,7 +209,7 @@ export function tankLitres(counts: Record<string, number> | undefined): number {
 /**
  * Small-grid examples built strictly from definition data (mass is an
  * ASSUMPTION: a 1,000 kg bus plus thrusters/tank/battery mass). Used in
- * `docs/endurance.md` and the tests, not by the live prefab catalog.
+ * the endurance model and the tests, not by the live prefab catalog.
  */
 export const SMALL_GRID_EXAMPLES: Record<string, HullHardwareSpec> = {
   'example:ion-solar-sat': {

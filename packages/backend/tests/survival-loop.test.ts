@@ -445,10 +445,10 @@ describe('T66 service: roles, pilot, state machine, relaunch approval', () => {
     refuelled.tick(NOW + 120_000);
     expect(refuelled.record('G-SAT')!.state).toBe('READY_TO_RELAUNCH');
     expect(store.listMissions()).toHaveLength(1);
-    const noConfirm = refuelled.relaunch('G-SAT', false, 'vex');
+    const noConfirm = refuelled.relaunch('G-SAT', false, 'owner');
     expect(noConfirm.ok).toBe(false);
     expect(noConfirm.reason).toContain('confirmation');
-    const go = refuelled.relaunch('G-SAT', true, 'vex');
+    const go = refuelled.relaunch('G-SAT', true, 'owner');
     expect(go.ok).toBe(true);
     expect(refuelled.record('G-SAT')!.state).toBe('RETURNING');
     expect(refuelled.record('G-SAT')!.phase).toBe('relaunch');
@@ -460,12 +460,12 @@ describe('T66 service: roles, pilot, state machine, relaunch approval', () => {
     const store = memStore();
     seed(store);
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 12 })) });
-    svc.writeSettings({ approvalMode: 'approve' }, 'vex');
+    svc.writeSettings({ approvalMode: 'approve' }, 'owner');
     svc.tick(NOW);
     expect(svc.record('G-SAT')!.state).toBe('RETURN_PENDING');
     expect(store.listMissions()).toHaveLength(0);
     expect(svc.record('G-SAT')!.reason).toContain('awaiting owner approval');
-    expect(svc.approveReturn('G-SAT', 'vex').ok).toBe(true);
+    expect(svc.approveReturn('G-SAT', 'owner').ok).toBe(true);
     expect(svc.record('G-SAT')!.state).toBe('RETURNING');
     expect(store.listMissions()).toHaveLength(1);
   });
@@ -663,7 +663,7 @@ describe('T77 testIgnoreReach: test-env loop override', () => {
     seed(store);
     // The test world: BASE-01 has no antenna, so the gate denies everything.
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 12 })), gate: false });
-    svc.writeSettings({ testIgnoreReach: true }, 'vex');
+    svc.writeSettings({ testIgnoreReach: true }, 'owner');
     expect(svc.testIgnoreReach()).toBe(true);
     expect(svc.settingsState().testIgnoreReachActive).toBe(true);
 
@@ -693,7 +693,7 @@ describe('T77 testIgnoreReach: test-env loop override', () => {
     seed(store);
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 12 })), gate: false, survivalMode: true });
     // Persist the value anyway (an old settings row, or a hand-edited kv).
-    svc.writeSettings({ testIgnoreReach: true }, 'vex');
+    svc.writeSettings({ testIgnoreReach: true }, 'owner');
     expect(svc.settings().testIgnoreReach).toBe(true); // stored...
     expect(svc.testIgnoreReach()).toBe(false); // ...but never in force
     expect(svc.settingsState().testIgnoreReachActive).toBe(false);
@@ -707,7 +707,7 @@ describe('T77 testIgnoreReach: test-env loop override', () => {
     const store = memStore();
     seed(store);
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 12 })), gate: false, demoEnv: false });
-    svc.writeSettings({ testIgnoreReach: true }, 'vex');
+    svc.writeSettings({ testIgnoreReach: true }, 'owner');
     expect(svc.testIgnoreReach()).toBe(false);
     svc.tick(NOW);
     expect(store.listMissions()).toHaveLength(0);
@@ -717,7 +717,7 @@ describe('T77 testIgnoreReach: test-env loop override', () => {
     const store = memStore();
     seed(store);
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 12 })), gate: false });
-    svc.writeSettings({ testIgnoreReach: true }, 'vex');
+    svc.writeSettings({ testIgnoreReach: true }, 'owner');
     svc.tick(NOW);
     const rec = svc.record('G-SAT')!;
     const missionId = rec.missionId!;
@@ -741,7 +741,7 @@ describe('T77 testIgnoreReach: test-env loop override', () => {
     });
     refuelled.tick(NOW + 120_000);
     expect(refuelled.record('G-SAT')!.state).toBe('READY_TO_RELAUNCH');
-    const go = refuelled.relaunch('G-SAT', true, 'vex');
+    const go = refuelled.relaunch('G-SAT', true, 'owner');
     expect(go.ok).toBe(true);
     const relaunchMission = store.getMission(go.missionId!)!;
     expect(relaunchMission.plan.steps.some((s) => s.params?.adminOverride === true)).toBe(true);
@@ -954,7 +954,7 @@ describe('T78 home point: validated, stored, resolved — never silently ignored
     const svc = service({ store });
     const point = parseHomePointKey(formatHomePointKey(surface(9_000)))!;
 
-    const ok = await svc.setHome({ gridId: 'G-SAT', homePoint: point, homeGridId: null }, 'vex');
+    const ok = await svc.setHome({ gridId: 'G-SAT', homePoint: point, homeGridId: null }, 'owner');
     expect(ok.ok).toBe(true);
     if (!ok.ok) return;
     expect(ok.flags.overrides['G-SAT']).toBe(formatHomePointKey(point));
@@ -962,24 +962,24 @@ describe('T78 home point: validated, stored, resolved — never silently ignored
     expect(audit.detail.homePoint).toEqual(point);
 
     // The global home can be a point as well.
-    const global = await svc.setHome({ homePoint: surface(15_000) }, 'vex');
+    const global = await svc.setHome({ homePoint: surface(15_000) }, 'owner');
     expect(global.ok).toBe(true);
     if (!global.ok) return;
     expect(global.flags.defaultHomeId).toBe(formatHomePointKey(surface(15_000)));
 
     const coarse = service({ store, ground: { radiusM: planet.surfaceRadiusM, level: 4, source: 'terrain-l4' } });
-    const refused = await coarse.setHome({ gridId: 'G-SAT', homePoint: surface(9_000) }, 'vex');
+    const refused = await coarse.setHome({ gridId: 'G-SAT', homePoint: surface(9_000) }, 'owner');
     expect(refused.ok).toBe(false);
     if (refused.ok) return;
     expect(refused.code).toBe('coarse_ground');
     expect(refused.reason).toContain('not landing grade');
 
-    const unknown = await svc.setHome({ homeGridId: 'grid:does-not-exist' }, 'vex');
+    const unknown = await svc.setHome({ homeGridId: 'grid:does-not-exist' }, 'owner');
     expect(unknown.ok).toBe(false);
     if (unknown.ok) return;
     expect(unknown.code).toBe('unknown_home');
 
-    const notBase = await svc.setHome({ homeGridId: 'SAT-L-0007' }, 'vex');
+    const notBase = await svc.setHome({ homeGridId: 'SAT-L-0007' }, 'owner');
     expect(notBase.ok).toBe(false);
     if (notBase.ok) return;
     expect(notBase.code).toBe('home_not_base');
@@ -1068,7 +1068,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
     const store = memStore();
     seed(store);
     const svc = service({ store, survivalMode: true, power: fakePower(baseSnapshot({ h2Pct: 100, h2Litres: 50_000 })) });
-    const refused = svc.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8 }, 'vex');
+    const refused = svc.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8 }, 'owner');
     expect(refused.ok).toBe(false);
     if (refused.ok) return;
     expect(refused.code).toBe('survival_mode');
@@ -1076,7 +1076,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
     // Persisted by hand (as an old kv row or a copied config would be).
     store.setKv(
       'survival:test-runway',
-      JSON.stringify({ 'G-SAT': { gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8, setAt: NOW, expiresAt: NOW + 60_000, by: 'vex' } }),
+      JSON.stringify({ 'G-SAT': { gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8, setAt: NOW, expiresAt: NOW + 60_000, by: 'owner' } }),
     );
     expect(svc.testRunwayState(NOW)).toEqual({});
     svc.tick(NOW);
@@ -1102,7 +1102,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
       series: () => samples(),
     } as unknown as PowerPoller;
     const withPower = service({ store, power });
-    expect(withPower.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 6000, pct: 100 }, 'vex').ok).toBe(true);
+    expect(withPower.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 6000, pct: 100 }, 'owner').ok).toBe(true);
     expect(store.listAudit(50).some((a) => a.action === 'demo_survival_test_runway')).toBe(true);
     expect(withPower.testRunwayState()['G-SAT']?.pct).toBe(100);
 
@@ -1117,7 +1117,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
     const store = memStore();
     seed(store);
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 100, h2Litres: 50_000 })) });
-    expect(svc.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8, ttlMin: 1 }, 'vex').ok).toBe(true);
+    expect(svc.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8, ttlMin: 1 }, 'owner').ok).toBe(true);
     expect(Object.keys(svc.testRunwayState(NOW))).toEqual(['G-SAT']);
     svc.tick(NOW);
     expect(store.listMissions()).toHaveLength(1); // exercised on the injected reading
@@ -1132,7 +1132,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
     const store = memStore();
     seed(store);
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 100, h2Litres: 50_000 })) });
-    svc.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8 }, 'vex');
+    svc.setTestRunway({ gridId: 'G-SAT', resource: 'h2', runwayMin: 480, pct: 8 }, 'owner');
     expect(svc.tick(NOW).started).toEqual(['G-SAT']);
 
     const missionId = svc.record('G-SAT')!.missionId!;
@@ -1146,7 +1146,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
     landed.tick(NOW + 60_000);
     expect(landed.record('G-SAT')!.state).toBe('NEEDS_REFUEL');
 
-    landed.clearTestRunway('G-SAT', 'vex');
+    landed.clearTestRunway('G-SAT', 'owner');
     const refuelled = service({
       store,
       power: fakePower(baseSnapshot({ h2Pct: 100, h2Litres: 50_000 })),
@@ -1155,7 +1155,7 @@ describe('T78 testRunwayOverride: exercise the flight, one grid at a time', () =
     });
     refuelled.tick(NOW + 120_000);
     expect(refuelled.record('G-SAT')!.state).toBe('READY_TO_RELAUNCH');
-    expect(refuelled.relaunch('G-SAT', true, 'vex').ok).toBe(true);
+    expect(refuelled.relaunch('G-SAT', true, 'owner').ok).toBe(true);
     expect(store.listAudit(50).some((a) => a.action === 'demo_survival_test_runway_cleared')).toBe(true);
   });
 });
@@ -1319,7 +1319,7 @@ describe('T79 landing spot: a clear point home is landed on, not offset', () => 
     const svc = service({ store, power: fakePower(baseSnapshot({ h2Pct: 12, h2Litres: 6_000 })) });
     const r = planet.surfaceRadiusM + 5;
     const point = { x: planet.center.x, y: planet.center.y + r, z: planet.center.z };
-    const stored = await svc.setHome({ gridId: 'G-SAT', homePoint: point, homeGridId: null }, 'vex');
+    const stored = await svc.setHome({ gridId: 'G-SAT', homePoint: point, homeGridId: null }, 'owner');
     expect(stored.ok).toBe(true);
     svc.tick(NOW);
     const rec = svc.record('G-SAT')!;

@@ -7,7 +7,7 @@
  * constraint and the site can call it through `/api/demo/power/budget`.
  *
  * Block numbers are EXACT from the game definitions used by the endurance model
- * (`docs/endurance.md`): large solar 0.16 MW, small solar 0.04 MW, large battery
+ * (endurance model): large solar 0.16 MW, small solar 0.04 MW, large battery
  * 3 MWh / 12 MW, small battery 1 MWh / 4 MW, small-small 0.05 MWh / 0.2 MW,
  * laser antenna 1.0 MW while lasing (0.001 turning, 0.0001 idle).
  *
@@ -33,7 +33,7 @@ export const BLOCK_POWER = {
    * Radio antenna draw model. SE has no power value in the antenna definition:
    * the game scales the sink with the configured radius, so the demo models it
    * linearly and calibrates the constant against the live profile's
-   * `antennaDrawMw` at the sampled radius (`docs/power-telemetry.md`).
+   * `antennaDrawMw` at the sampled radius (power telemetry model).
    */
   radioMwPerKm: 0.004,
 } as const;

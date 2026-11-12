@@ -48,3 +48,8 @@ remote.env
 *.swp
 .tmp/
 tmp/
+
+# Generated documentation site (README -> docs/index.md, build output)
+docs/index.md
+site/
+docs/all-docs.md
