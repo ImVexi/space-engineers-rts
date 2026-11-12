@@ -31,6 +31,7 @@ import {
 import type { Store } from '../store.js';
 import { getStandIn, getStandInByName, type StandIn } from './standins.js';
 import { aliveNodes, type DemoWorld } from './world.js';
+import type { ShipRole } from './roles.js';
 
 export const PROVISION_CAPABILITIES_KV = 'provision:capabilities';
 export const PROVISION_LASERS_KV = 'provision:lasers';
@@ -44,6 +45,11 @@ export interface GridCapability {
   name: string;
   /** BASE grids are control sources; DRONE grids are relays/leaves. */
   profile: 'BASE' | 'DRONE' | null;
+  /**
+   * The role the provisioner resolved for this row (single shared resolver:
+   * any tag spelling). Older snapshots carry no role; `profile` is the fallback.
+   */
+  role?: ShipRole | null;
   /** Broadcasting radio radius read back from the block, or null. */
   radioRadiusM: number | null;
   broadcasting: boolean | null;
@@ -81,7 +87,8 @@ export interface NetworkSnapshot {
   capability: Map<string, GridCapability>;
   livePairs: LiveLaserPair[];
   /**
-   * Provisioned `[HERMES-BASE]` grids that have NO antenna block. They are a
+   * Provisioned BASE-role grids that have NO antenna block (any role-tag
+   * spelling). They are a
    * world fact, not a model error: no order can be routed through them until
    * the owner builds an antenna, and the gate says so by name.
    */
@@ -98,6 +105,7 @@ interface CapabilityRow {
   gridId?: unknown;
   name?: unknown;
   profile?: unknown;
+  role?: unknown;
   radioRadiusM?: unknown;
   broadcasting?: unknown;
   radioState?: unknown;
@@ -115,6 +123,16 @@ function asNumber(v: unknown): number | null {
 function normalizeRow(row: CapabilityRow): GridCapability | null {
   if (typeof row.gridId !== 'string' || !row.gridId) return null;
   const profile = row.profile === 'BASE' || row.profile === 'DRONE' ? row.profile : null;
+  // The provisioner's resolved role (any tag spelling). A snapshot written
+  // before roles existed has no `role` row: the profile is the same fact.
+  const role: ShipRole | null =
+    row.role === 'managed' || row.role === 'personal' || row.role === 'base' || row.role === 'off'
+      ? row.role
+      : profile === 'BASE'
+        ? 'base'
+        : profile === 'DRONE'
+          ? 'managed'
+          : null;
   const broadcasting = typeof row.broadcasting === 'boolean' ? row.broadcasting : null;
   const radio = asNumber(row.radioRadiusM);
   const radioState: RadioState | null =
@@ -126,6 +144,7 @@ function normalizeRow(row: CapabilityRow): GridCapability | null {
     gridId: row.gridId,
     name: typeof row.name === 'string' && row.name ? row.name : row.gridId,
     profile,
+    role,
     radioRadiusM: broadcasting === true && radio !== null && radio > 0 ? radio : null,
     broadcasting,
     radioState,
@@ -134,9 +153,10 @@ function normalizeRow(row: CapabilityRow): GridCapability | null {
     laserRangeM: laserCount > 0 ? LASER_MODEL_CAP_M : null,
     massKg: asNumber(row.massKg),
     isStatic: typeof row.isStatic === 'boolean' ? row.isStatic : null,
-    controlSource: profile === 'BASE' && broadcasting === true && radio !== null && radio > 0,
+    // Only a BASE-role grid with a broadcasting antenna is a control source.
+    controlSource: role === 'base' && broadcasting === true && radio !== null && radio > 0,
     updatedAt: asNumber(row.updatedAt),
-    source: profile === 'BASE' ? 'provisioned-base' : 'provisioned-grid',
+    source: role === 'base' || profile === 'BASE' ? 'provisioned-base' : 'provisioned-grid',
   };
 }
 
@@ -379,7 +399,7 @@ export function networkSnapshot(input: NetworkInput): NetworkSnapshot {
   }
 
   const noAntennaBases = [...capability.values()]
-    .filter((cap) => cap.profile === 'BASE' && cap.radioState === 'absent')
+    .filter((cap) => (cap.role ?? (cap.profile === 'BASE' ? 'base' : null)) === 'base' && cap.radioState === 'absent')
     .map((cap) => ({ id: cap.gridId, name: cap.name }));
 
   return {

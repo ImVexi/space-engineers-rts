@@ -187,6 +187,14 @@ describe('T68 alerts: conditions and dedupe', () => {
       }),
     ];
 
+    const held = await service.evaluate();
+    expect(held.resolved, 'one absent sample must not resolve (hysteresis)').toHaveLength(0);
+    expect(store.getAlert(alert.id)!.state).toBe('open');
+    expect(store.countAudit('alert_resolved', alert.id)).toBe(0);
+
+    // The absence holds for the second evaluation: now it is a transition.
+    clock.advance(30_000);
+    ctx.now = clock.now();
     const second = await service.evaluate();
     expect(second.resolved).toHaveLength(1);
     expect(second.resolved[0]!.id).toBe(alert.id);
@@ -402,6 +410,43 @@ describe('T68 alerts: conditions and dedupe', () => {
     }
   });
 
+  it('never auto-resolves a kind it does not own (survival stranded / return-home)', async () => {
+    // Measured 2026-11-11: 70 alert ids resolved in 5 minutes with zero opens.
+    // The survival loop opens `stranded` / `return-home` itself; this engine has
+    // no candidate for those kinds, so "absent from my candidates" used to mean
+    // "condition cleared" and every 30 s evaluation resolved each one.
+    const clock = makeClock(NOW);
+    const ctx = context({ grids: [grid({ runwayMin: null })] });
+    const { store, service } = harness({ ctx: () => ctx, clock: clock.now });
+    const make = (kind: string) =>
+      store.createAlert({
+        kind,
+        severity: 'critical',
+        subjectType: 'grid',
+        subjectId: GRID,
+        message: `${kind} for ${GRID}`,
+        evidence: {},
+        actions: [],
+        count: 1,
+        firstSeenAt: NOW,
+        lastSeenAt: NOW,
+      });
+    const stranded = make('stranded');
+    const home = make('return-home');
+
+    for (let i = 0; i < 10; i += 1) {
+      clock.advance(30_000);
+      ctx.now = clock.now();
+      const result = await service.evaluate();
+      expect(result.resolved, `evaluation ${i}`).toHaveLength(0);
+    }
+
+    expect(store.getAlert(stranded.id)!.state).toBe('open');
+    expect(store.getAlert(home.id)!.state).toBe('open');
+    expect(store.countAudit('alert_resolved'), 'no flap rows at all').toBe(0);
+    expect(store.countAudit('alert_resolved_delivered')).toBe(0);
+  });
+
   it('has a cooldown per kind and never re-opens a cleared condition inside it', async () => {
     expect(ALERT_COOLDOWNS_MS['energy-runway']).toBeGreaterThan(0);
     expect(ALERT_COOLDOWNS_MS['coverage-hole']).toBeGreaterThan(ALERT_COOLDOWNS_MS['mission-failed']);
@@ -414,10 +459,15 @@ describe('T68 alerts: conditions and dedupe', () => {
     expect(fired.opened).toHaveLength(1);
     const id = fired.opened[0]!.id;
 
-    // Condition clears, then immediately returns (flapping).
+    // Condition clears, then immediately returns (flapping). One evaluation is
+    // not a transition: it holds until the absence has lasted RESOLVE_HOLD_MS.
     clock.advance(30_000);
     ctx.now = clock.now();
     ctx.grids = [grid({ runwayMin: null })];
+    await service.evaluate();
+    expect(store.getAlert(id)!.state).toBe('open');
+    clock.advance(30_000);
+    ctx.now = clock.now();
     await service.evaluate();
     expect(store.getAlert(id)!.state).toBe('resolved');
 
@@ -844,12 +894,12 @@ describe('T68 alerts: HTTP routes', () => {
       port,
       'POST',
       `/api/alerts/${alert.id}/ack`,
-      { by: 'operator' },
+      { by: 'vexx' },
       'token',
     );
     expect(res.status).toBe(200);
     expect(res.body.alert.state).toBe('acked');
-    expect(res.body.alert.ackedBy).toBe('operator');
+    expect(res.body.alert.ackedBy).toBe('vexx');
     expect(res.body.audit).toBe('alert_acked');
     expect(store.getAlert(alert.id)!.state).toBe('acked');
     expect(store.countAudit('alert_acked', alert.id)).toBe(1);
@@ -858,7 +908,7 @@ describe('T68 alerts: HTTP routes', () => {
       port,
       'POST',
       `/api/alerts/${alert.id}/resolve`,
-      { by: 'operator' },
+      { by: 'vexx' },
       'token',
     );
     expect(resolved.status).toBe(200);

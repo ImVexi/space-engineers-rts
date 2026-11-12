@@ -280,6 +280,10 @@ export function createHttpServer(deps: ServerDeps): http.Server {
           // is the other half of the same rule.
           survivalMode: resolveSurvivalMode(),
           flags: store.getFlags(),
+          // Routine poller traffic is counted, not audited (2026-11-11): the
+          // only place to see it. `store.routineStats()` is in-memory, so this
+          // resets with the process.
+          routineAudit: store.routineStats(),
         });
       },
     },

@@ -65,6 +65,16 @@ export class OrderResultBus {
   }
 
   /**
+   * Read a result WITHOUT consuming it. For the lookups that are not waiters —
+   * staging reads a whole batch at once, the executor reads a probe or a
+   * landing's report after the fact — a `take` would eat the result another
+   * caller still needs.
+   */
+  peek(orderId: string): OrderResult | null {
+    return this.stored.get(orderId)?.value ?? null;
+  }
+
+  /**
    * Await delivery for `timeoutMs`. Resolves null on timeout. Consumes the
    * value, so a single result is never handled twice.
    */
@@ -176,4 +186,37 @@ function findInStore(store: Store, orderId: string, cursor: { rowid: number }): 
 /** Test helper: forget every kept result. */
 export function resetOrderResultsForTests(): void {
   orderResults.reset();
+}
+
+/**
+ * One order's result for a caller that is NOT waiting: memory first (the tick
+ * the frame arrived), then the audit table (control-channel rows only).
+ *
+ * This is the replacement for `for (row of store.listOrderResults(400)) if
+ * (row.orderId === id)`. That scan read the audit window, so it silently broke
+ * when routine rows stopped being stored — and it cost a 400-row LIKE scan per
+ * call. `maxAgeMs` keeps the durable half honest: a result older than the
+ * order's timeout is not this order's answer.
+ */
+export function lookupOrderResult(
+  store: Store,
+  orderId: string,
+  opts: { bus?: OrderResultBus; maxAgeMs?: number; now?: number } = {},
+): OrderResult | null {
+  const bus = opts.bus ?? orderResults;
+  const peeked = bus.peek(orderId);
+  if (peeked) return peeked;
+  // The store's clock wrote every `at`; Date.now() would be wrong in a test
+  // runtime and would hide a result that is actually five seconds old.
+  const now = opts.now ?? store.now();
+  const entry = store.findOrderResult(orderId, now - (opts.maxAgeMs ?? 5 * 60_000));
+  if (!entry) return null;
+  const detail = entry.detail as {
+    eventType?: string;
+    data?: { orderId?: string; ok?: boolean; error?: string; result?: Record<string, unknown> };
+  };
+  if (detail?.eventType !== 'order_result') return null;
+  const data = detail.data;
+  if (data?.orderId !== orderId) return null;
+  return { ok: data.ok !== false, result: data.result, error: data.error };
 }

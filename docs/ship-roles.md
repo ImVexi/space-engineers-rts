@@ -28,6 +28,31 @@ accident. An unknown `HERMES_ROLE=` value is ignored. `[HERMES-TEST]` is a
 second spelling of `MANAGED`, kept for hulls tagged before the role names
 settled.
 
+## A short tag is exactly as strong as a long one
+
+There is one resolver (`resolveGridRole()` in the backend) and every consumer
+asks it — the provisioner, the capability snapshot and network builder, the
+comms gate, the naming service, the survival loop and the site badges. Nothing
+re-implements tag matching, so `[BASE]` on a cargo container is a control source
+exactly like `[HERMES-BASE]` on a programmable block, and `[MANAGED]` is
+provisioned and flown exactly like `[HERMES-MANAGED]`.
+
+| Consumer | What the resolved role decides |
+|---|---|
+| provisioner | `MANAGED` (any spelling, any block) gets the drone profile; `BASE` the station profile; `PERSONAL`/`OFF` are never provisioned |
+| capability snapshot + network | only `BASE` with a broadcasting antenna read back is a control source |
+| comms gate | reachability is measured to those `BASE` grids; an unprovisioned grid is never assumed reachable |
+| naming | `BASE`/`MANAGED` may be named; `PERSONAL`/`OFF` never |
+| site badges | the same `role`, `roleSource` and `reason` you see in game |
+
+## Naming keeps your tag form
+
+Automatic naming never invents a tag and never "upgrades" one. The PB prefix
+keeps the spelling the owner used (`[BASE] …` stays `[BASE] …`), a grid marked
+only in CustomData gets no name tag at all, and auto-rename is **off by default
+on a live instance** (`RTS_NAMING_AUTO=1` turns it back on; the test instance
+keeps it on).
+
 ## Untagged grids
 
 On a hosted server (`RTS_ENV=live`) an untagged grid is **`OFF`**. "Nobody

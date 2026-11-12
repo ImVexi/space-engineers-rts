@@ -5,8 +5,9 @@ own. Do this before you expect the map to show anything useful.
 
 ## 1. Build one base with a radio antenna
 
-1. Put a block on the base and rename it `[HERMES-BASE] BASE-01` (any block's
-   CustomName works), or add `HERMES_ROLE=base` to a block's CustomData.
+1. Put a block on the base and rename it `[BASE] BASE-01` (or `[HERMES-BASE]
+   BASE-01` — the two are equivalent; any block's CustomName works), or add
+   `HERMES_ROLE=base` to a block's CustomData.
 2. Build and **power** at least one radio antenna on that base, switched **On**, with a range that reaches where your ships fly (~50 km for a large-grid
    antenna).
 3. Leave the base grid alone: it is the home point the survival loop returns to
@@ -26,6 +27,13 @@ work:
 | Never touch automatically | `[PERSONAL]` or `[HERMES-PERSONAL]` | `HERMES_ROLE=personal` |
 | A base / station | `[HERMES-BASE]` or `[BASE]` | `HERMES_ROLE=base` |
 | Read only, no orders ever | `[OFF]` or `[HERMES-OFF]` | `HERMES_ROLE=off` |
+
+The tag goes on **any block** of the grid, not just a programmable block: a
+cargo container, an antenna, a gyro. The short forms are not a lesser alias —
+`[BASE]` is read by the same resolver as `[HERMES-BASE]`, and everything
+(provisioning, the comms gate, the network graph, naming) sees one answer. Two
+different non-`MANAGED` tags on one grid resolve to the most restrictive role
+(`OFF` > `PERSONAL` > `BASE` > `MANAGED`) and raise one alert.
 
 - **Untagged grids are OFF.** An untagged ship, a pirate/NPC grid or debris gets
   no orders.

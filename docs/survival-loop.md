@@ -46,7 +46,9 @@ H2 0 %, needs 12 % to reach BASE-01; cannot return — refuel it where it is or 
 
 State `STRANDED`, a critical `stranded` alert (one per grid, cleared when it can
 fly again), and **no mission, no order**. A static grid in the air stays a
-station. It clears itself on a later pass with enough fuel.
+station. It clears itself on a later pass with enough fuel; the alert is held for
+a settling window first, so a tank that sloshes across the threshold does not
+raise and clear it repeatedly.
 
 Which resource grounds a ship comes from its thrusters: any hydrogen bank means
 an empty tank grounds it, any atmo/ion bank means an empty battery does. A
@@ -78,7 +80,8 @@ Only `BASE` grids are candidates, and a base is never moved by the loop.
 
 A point home is validated: it must be near a planet, on the surface, on
 landing-grade terrain and at least 60 m from every grid. A bad point is a plain
-400, never a silently substituted base.
+400, never a silently substituted base. A per-ship override is cleared by sending
+`homePoint: null` (or `homeGridId: null`) — omitting the field leaves it alone.
 
 ## The return flight
 

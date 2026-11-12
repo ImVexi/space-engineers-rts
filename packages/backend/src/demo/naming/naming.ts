@@ -19,7 +19,8 @@ import type { Store } from '../../store.js';
 import type { PluginHub } from '../../pluginHub.js';
 import { callPlugin, loadProfiles, type ProvisionDeps, type TaggedGrid } from '../provision/provisioner.js';
 import { LaserLinker } from '../laser.js';
-import { resolveRole, shipRoles } from '../roles.js';
+import { resolveGridRole, isAutomatableRole, hintsFromPluginGrid, shipRoles } from '../roles.js';
+import { isLiveInstance } from '../ownership.js';
 
 export const NAMING_KV = 'naming:registry';
 export const LASER_TEST_KV = 'naming:lasertest';
@@ -110,6 +111,42 @@ export function isDefaultName(name: string | null | undefined): boolean {
   return /^(small|large|static)\s+grid\b/i.test(n) || /^grid\b/i.test(n) || /^unnamed\b/i.test(n);
 }
 
+/**
+ * Is automatic renaming allowed on this instance?
+ *
+ * OFF BY DEFAULT ON LIVE (`RTS_ENV=live`): renaming an owner's grid and block
+ * names on the shared survival world is a visible, hard-to-undo change, and the
+ * live instance is not a naming playground. The test instance keeps the old
+ * behaviour (on). Either can be forced with `RTS_NAMING_AUTO=1` / `=0`.
+ */
+export function namingAutoEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = (env.RTS_NAMING_AUTO ?? '').trim().toLowerCase();
+  if (raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes') return true;
+  if (raw === '0' || raw === 'false' || raw === 'off' || raw === 'no') return false;
+  return !isLiveInstance(env);
+}
+
+/**
+ * Tag prefix for a programmable block name. The owner's own spelling wins:
+ * `[BASE]` stays `[BASE]`, never rewritten into `[HERMES-BASE]`. A role set only
+ * in CustomData mints no name tag at all (null = leave the PB name alone), so
+ * naming can never add a tag the owner did not write.
+ */
+export function pbTagPrefix(
+  kind: GridKind,
+  grid: Pick<TaggedGrid, 'roleHints' | 'blocks'> | null | undefined,
+): string | null {
+  const want = kind === 'BASE' ? 'base' : 'managed';
+  const hints = hintsFromPluginGrid(grid as TaggedGrid | null | undefined);
+  // Prefer the literal bracket token from a block NAME: that is the form the
+  // owner typed, and the PB rename must preserve it.
+  const nameHint = hints.find((h) => h.role === want && h.source === 'block-name' && h.token.startsWith('['));
+  if (nameHint) return nameHint.token;
+  const anyHint = hints.find((h) => h.role === want);
+  if (anyHint) return null;
+  return kind === 'BASE' ? '[HERMES-BASE]' : '[HERMES-TEST]';
+}
+
 /** Sat class from live block counts. */
 export function satClassOf(radioCount: number, laserCount: number): SatClass {
   if (laserCount >= 2) return 'L';
@@ -179,7 +216,7 @@ export class NamingService {
         blocks: {
           radio: '<grid name>',
           laser: '<grid name> L1/L2',
-          programmable: '[HERMES-TEST] <name> / [HERMES-BASE] <name>',
+          programmable: "<owner's tag form> <name>, e.g. [BASE] <name> / [MANAGED] <name> (long tags work too)",
         },
       },
       grids: [...this.registry.grids].sort((a, b) => a.gridId.localeCompare(b.gridId)),
@@ -190,6 +227,7 @@ export class NamingService {
         'GAME: grid/block names written through the plugin and read back',
         'numbers are allocated once and persisted; never reused',
         'ownerOverride=true means the owner renamed the grid; auto-naming no longer touches it',
+        `auto-rename is ${namingAutoEnabled() ? 'ON' : 'OFF'} on this instance (RTS_NAMING_AUTO overrides; off by default on live)`,
       ],
     };
   }
@@ -224,6 +262,14 @@ export class NamingService {
     const profiles = loadProfiles();
     const at = nowOf(this.deps);
     const run: NamingRun = { at, scanned: grids.length, assigned: 0, renamed: 0, overrides: 0, skipped: 0, errors: [] };
+
+    // Live: auto-rename is off unless explicitly configured. Manual renames
+    // (POST /api/demo/naming/rename) still work.
+    if (!namingAutoEnabled()) {
+      run.skipped = grids.length;
+      this.lastRun = run;
+      return run;
+    }
 
     for (const grid of grids) {
       const owners = [grid.owner, ...(grid.owners ?? [])].filter((v): v is string => typeof v === 'string');
@@ -324,10 +370,12 @@ export class NamingService {
 
   private kindOf(grid: TaggedGrid, profiles: ReturnType<typeof loadProfiles>): GridKind | null {
     // SHIP ROLE: auto-naming is automatic. A personal/owner grid is never
-    // renamed, and an OFF grid is only ever read.
-    const role = resolveRole({ hints: grid.roleHints ?? null }).role;
-    if (role === 'personal' || role === 'off') return null;
-    if (role === 'base') return 'BASE';
+    // renamed, and an OFF grid is only ever read. The shared resolver reads
+    // every tag spelling, on any block or in CustomData.
+    const res = resolveGridRole(grid, { live: false });
+    if (res.role === 'personal' || res.role === 'off') return null;
+    if (res.role === 'base') return 'BASE';
+    if (isAutomatableRole(res)) return 'SAT';
     const tags = (grid.tags ?? []).map((t) => t.toLowerCase());
     if (tags.includes((profiles.tags.BASE ?? '').toLowerCase())) return 'BASE';
     if (tags.includes((profiles.tags.DRONE ?? '').toLowerCase())) return 'SAT';
@@ -379,15 +427,30 @@ export class NamingService {
       }
     }
 
-    const pbRes = await callPlugin(
-      this.deps,
-      'rename_block',
-      { entityId: grid.gridId, filter: { type: 'ProgrammableBlock' }, name: `[${kind === 'BASE' ? 'HERMES-BASE' : 'HERMES-TEST'}] ${rec.name}` },
-      15_000,
-    );
+    // The PB carries the role tag so the grid is recognisable in game. Keep the
+    // owner's own spelling (`[BASE]` stays `[BASE]`) and add NOTHING when the
+    // mark lives in CustomData: naming never rewrites the owner's tag.
+    const prefix = pbTagPrefix(kind, grid);
+    const pbName = prefix ? `${prefix} ${rec.name}` : null;
+    const pbRes = pbName
+      ? await callPlugin(
+          this.deps,
+          'rename_block',
+          { entityId: grid.gridId, filter: { type: 'ProgrammableBlock' }, name: pbName },
+          15_000,
+        )
+      : null;
     // The owner's grids carry one PB each; zero matches means it was removed, not
     // a naming failure, so record it without failing the grid.
-    renamedBlocks.push({ what: 'programmableBlock', name: `[${kind === 'BASE' ? 'HERMES-BASE' : 'HERMES-TEST'}] ${rec.name}`, blocks: pbRes.ok ? pbRes.result?.blocks ?? [] : [], error: pbRes.ok ? null : pbRes.error });
+    renamedBlocks.push({
+      what: 'programmableBlock',
+      name: pbName,
+      blocks: pbRes?.ok ? pbRes.result?.blocks ?? [] : [],
+      error: pbRes && !pbRes.ok ? pbRes.error : null,
+      ...(pbName
+        ? {}
+        : { skipped: 'role is set in CustomData only: the PB name is left as the owner wrote it' }),
+    });
 
     rec.audit.push(`renamed@${at}`);
     this.deps.store.audit({

@@ -78,36 +78,45 @@ export class AlertDelivery {
    * Returns the channels that accepted each alert (for the evaluate response).
    */
   async deliver(
-    entries: { alert: Alert; variant: DeliveryVariant }[],
+    entries: { alert: Alert; variant: DeliveryVariant; escalated?: boolean }[],
     now = this.deps.clock(),
   ): Promise<{ alertId: string; channels: string[]; mode: 'immediate' | 'batched' | 'disabled' }[]> {
     const settings = this.deps.settings();
     const webhook = settings.discordWebhook;
     const results: { alertId: string; channels: string[]; mode: 'immediate' | 'batched' | 'disabled' }[] = [];
 
-    for (const { alert, variant } of entries) {
+    for (const { alert, variant, escalated } of entries) {
       const critical = alert.severity === 'critical' && variant !== 'resolved';
       const mode = !webhook ? 'disabled' : critical ? 'immediate' : 'batched';
       const channels = ['audit'];
       if (webhook) channels.push('discord');
 
       try {
-        this.deps.store.audit({
-          actor: 'alerts',
-          action: variant === 'resolved' ? 'alert_resolved_delivered' : 'alert_delivered',
-          subject: alert.id,
-          detail: {
-            kind: alert.kind,
-            severity: alert.severity,
-            subjectType: alert.subjectType,
-            subjectId: alert.subjectId,
-            variant,
-            channels,
-            deliveryMode: mode,
-            count: alert.count,
-          },
-          at: now,
-        });
+        // An alert that is still up is re-delivered on every evaluation. The
+        // FIRST delivery is the state change and is audited; a plain repeat
+        // (`variant === 'updated'`) is the same alert again — 43 k rows/day of
+        // `variant: "updated"` and no extra evidence. An ESCALATION (warn ->
+        // critical) is a real state change and keeps its row. The Discord send
+        // below is unchanged: the operator still gets the reminder.
+        if (variant !== 'updated' || escalated === true) {
+          this.deps.store.audit({
+            actor: 'alerts',
+            action: variant === 'resolved' ? 'alert_resolved_delivered' : 'alert_delivered',
+            subject: alert.id,
+            detail: {
+              kind: alert.kind,
+              severity: alert.severity,
+              subjectType: alert.subjectType,
+              subjectId: alert.subjectId,
+              variant,
+              ...(escalated === true ? { escalated: true } : {}),
+              channels,
+              deliveryMode: mode,
+              count: alert.count,
+            },
+            at: now,
+          });
+        }
       } catch (err) {
         // Audit failing must not stop the alert from being queued.
         this.fail(alert, `audit write failed: ${errText(err)}`, now);

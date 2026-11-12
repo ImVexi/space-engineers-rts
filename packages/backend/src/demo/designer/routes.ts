@@ -12,6 +12,7 @@ import { add, normalize, scale, sub, v3, type V3 } from '../../planner/geometry.
 import { resolveDemoEnv } from '../env.js';
 import { SURVIVAL_MESSAGE, SURVIVAL_REASON, isAdminAction, resolveSurvivalMode } from '../survival.js';
 import { decideOrderChannel } from '../channel.js';
+import { waitForOrderResult } from '../../orderResults.js';
 import { shipRoles } from '../roles.js';
 import type { DemoExecutor } from '../executor.js';
 import { prefabHulls, taggedHull, findHull, type DesignerHull, type TaggedGridProfile } from './hulls.js';
@@ -282,27 +283,16 @@ async function callPlugin(deps: DesignerDeps, action: string, params: Record<str
     detail: { action, params },
     at: now,
   });
+  // The result is no longer an audit row for a non-control order (routine
+  // traffic is counted, not written), so read it from the order-result bus:
+  // event-first, resolved on the tick the frame arrives.
+  const sinceRowid = deps.store.maxAuditRowid();
   if (!deps.hub.send(payload)) {
     throw new DesignerHttpError(503, 'plugin_send_failed', 'the plugin socket refused the order');
   }
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const hit = findResult(deps.store, orderId);
-    if (hit) return hit;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
+  const hit = await waitForOrderResult(deps.store, orderId, timeoutMs, { sinceRowid });
+  if (hit) return hit;
   throw new DesignerHttpError(504, 'plugin_timeout', `plugin did not return a result for ${action} within ${timeoutMs} ms`);
-}
-
-function findResult(store: Store, orderId: string): PluginTestResult | null {
-  for (const entry of store.listAudit(400)) {
-    const detail = entry.detail as { eventType?: string; data?: { orderId?: string; ok?: boolean; error?: string; result?: Record<string, unknown> } };
-    if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result') continue;
-    const data = detail.data;
-    if (data?.orderId !== orderId) continue;
-    return { ok: data.ok !== false, result: data.result, error: data.error };
-  }
-  return null;
 }
 
 interface LiveGridInfo {

@@ -14,7 +14,14 @@ export default defineConfig({
   test: {
     environment: 'node',
     // T74: the suite runs as the marked test world (see the file's header).
-    setupFiles: ['./packages/backend/tests/setup-fixture-env.ts'],
+    setupFiles: [
+      './packages/backend/tests/setup-fixture-env.ts',
+      // Removes this file's temp dirs at afterAll (the suite used to leak one
+      // `se-rts-test-*` dir per temp store - 22 k dirs / 1.4 GB).
+      './packages/backend/tests/setup-temp-dirs.ts',
+    ],
+    // Killed runs left dirs forever; sweep only ones older than 12 h.
+    globalSetup: ['./packages/backend/tests/global-temp-sweep.ts'],
     include: [
       'packages/*/tests/**/*.test.ts',
       'packages/demo-site/tests/**/*.test.{ts,tsx}',

@@ -6,8 +6,41 @@ import { FEATURE_FLAGS } from '../src/config.js';
 import { openDb } from '../src/db.js';
 import { Store } from '../src/store.js';
 
+/**
+ * Every temp dir this test FILE created, so it can be removed when the file
+ * finishes. The suite used to leave one `se-rts-test-*` dir per temp store
+ * behind: 22 478 dirs / 1.4 GB after a few days of runs, enough to fill the
+ * disk. `setup-temp-dirs.ts` (a vitest setupFile) empties this at `afterAll`.
+ */
+const createdTempDirs = new Set<string>();
+
 export function tempDir(prefix = 'se-rts-test-'): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  createdTempDirs.add(dir);
+  return dir;
+}
+
+/**
+ * Remove the temp dirs this file created (best effort: a dir already gone is
+ * not an error). Returns how many were removed, for the self-test.
+ */
+export function cleanupTempDirs(): number {
+  let removed = 0;
+  for (const dir of createdTempDirs) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+      removed++;
+    } catch {
+      /* a leaked dir is better than a failed test */
+    }
+  }
+  createdTempDirs.clear();
+  return removed;
+}
+
+/** How many temp dirs this file created and has not cleaned up yet. */
+export function openTempDirCount(): number {
+  return createdTempDirs.size;
 }
 
 export function makeConfig(

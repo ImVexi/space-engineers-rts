@@ -135,7 +135,7 @@ export interface DesiredRecord {
 }
 
 /**
- * Named, coloured sets of grid ids. Membership is a
+ * CONTRACT-FEATURES §4: a named, coloured set of grid ids. Membership is a
  * JSON array of strings on purpose - SE grid ids exceed 2^53, so they must
  * never round-trip through a JS number. One grid may appear in several groups.
  */
@@ -452,12 +452,62 @@ export class Store {
   // ------------------------------------------------------------------- audit
 
   /**
-   * Audit retention for the ROUTINE channel, ms. Routine poller traffic
-   * (`radio_links`, `laser_state`, `list_tagged`, `profile`) is kept for an
-   * hour so a polling puzzle can still be debugged, then pruned. The business
-   * channel is never pruned: a landing's evidence must outlive the run.
+   * Routine poller traffic (`radio_links`, `laser_state`, `list_tagged`,
+   * `profile` orders and their results) is NOT stored in `audit` at all.
+   *
+   * Storing it, even on a `routine = 1` channel, kept the table at ~90 k
+   * rows/day: the rows were excluded from reads but still written, still
+   * carried the full 8–12 KB result body, and still had to be pruned. The
+   * order-result bus (`orderResults.ts`) already delivers every result in
+   * memory on the tick it arrives, so the only reason to keep a row — an
+   * order-result lookup — no longer needs one. What survives is a counter and
+   * a rate-limited log line, which is what an operator actually reads.
    */
   static readonly ROUTINE_AUDIT_TTL_MS = 60 * 60 * 1000;
+  /** One summary line per interval, never one line per routine row. */
+  static readonly ROUTINE_LOG_INTERVAL_MS = 60_000;
+
+  private readonly routineCounts = new Map<string, number>();
+  private routineTotal = 0;
+  private routineSince = 0;
+  private routineLastAt = 0;
+  private lastRoutineLogAt = 0;
+  private routineLogger: ((message: string) => void) | null = null;
+
+  /** Route the rate-limited routine summary somewhere (default: console). */
+  setRoutineLogger(logger: ((message: string) => void) | null): void {
+    this.routineLogger = logger;
+  }
+
+  /**
+   * Routine traffic counters, for `/api/health`. These are the only trace a
+   * routine row leaves: how many, of what kind, since when, newest one.
+   */
+  routineStats(): { total: number; since: number | null; lastAt: number | null; byAction: Record<string, number> } {
+    const byAction: Record<string, number> = {};
+    for (const [action, n] of [...this.routineCounts].sort((a, b) => b[1] - a[1])) byAction[action] = n;
+    return {
+      total: this.routineTotal,
+      since: this.routineTotal === 0 ? null : this.routineSince,
+      lastAt: this.routineTotal === 0 ? null : this.routineLastAt,
+      byAction,
+    };
+  }
+
+  /** Count one routine event; drop it, log a summary at most once a minute. */
+  private noteRoutine(action: string, at: number): void {
+    if (this.routineTotal === 0) this.routineSince = at;
+    this.routineTotal += 1;
+    this.routineLastAt = at;
+    this.routineCounts.set(action, (this.routineCounts.get(action) ?? 0) + 1);
+    if (at - this.lastRoutineLogAt < Store.ROUTINE_LOG_INTERVAL_MS) return;
+    this.lastRoutineLogAt = at;
+    const summary = Object.entries(this.routineStats().byAction)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(' ');
+    const line = `[routine] ${this.routineTotal} routine events not audited (${summary})`;
+    (this.routineLogger ?? ((m: string) => console.log(m)))(line);
+  }
 
   audit(input: {
     actor?: string;
@@ -467,17 +517,20 @@ export class Store {
     rollbackPoint?: string | null;
     at?: number;
     /**
-     * Routine poller traffic: still recorded (order-result lookups read it),
-     * but excluded from the default audit reads and pruned after an hour.
-     * Never use it for a state change or an error.
+     * Routine poller traffic: counted and dropped, never written. The body is
+     * not even serialised. Never use it for a state change or an error.
      */
     routine?: boolean;
   }): string {
     const id = `aud-${randomUUID()}`;
     const at = input.at ?? this.now();
+    if (input.routine === true) {
+      this.noteRoutine(input.action, at);
+      return id;
+    }
     this.db
       .prepare(
-        'INSERT INTO audit (id, at, actor, action, subject, detail, rollback_point, routine) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO audit (id, at, actor, action, subject, detail, rollback_point, routine) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
       )
       .run(
         id,
@@ -487,17 +540,20 @@ export class Store {
         input.subject,
         JSON.stringify(input.detail ?? {}),
         input.rollbackPoint ?? null,
-        input.routine === true ? 1 : 0,
       );
-    if (input.routine === true) this.pruneRoutineAudit(at);
     return id;
   }
 
-  /** Drop routine rows older than the TTL (cheap: one indexed DELETE). */
-  private pruneRoutineAudit(now = this.now()): void {
-    this.db
+  /**
+   * Drop leftover `routine = 1` rows written before routine traffic stopped
+   * being stored (the column stays for the old rows and the CSV export).
+   * Called by the retention pass, not by every audit write.
+   */
+  pruneRoutineAudit(now = this.now()): number {
+    const info = this.db
       .prepare('DELETE FROM audit WHERE routine = 1 AND at < ?')
       .run(now - Store.ROUTINE_AUDIT_TTL_MS);
+    return Number(info.changes);
   }
 
   /**
@@ -534,13 +590,49 @@ export class Store {
   }
 
   /**
-   * `plugin_event/order_result` rows from BOTH channels, newest first. The
-   * order-result lookups (provisioner, staging, power, executor) need the
-   * routine rows too, because that is where a poller's answer is recorded.
+   * One order's result from the audit table, if it was written there.
    *
-   * Matched on the detail's `eventType`, not the subject: the live plugin sends
-   * subject `order_result`, older code wrote the order id there, and both are
-   * in the table.
+   * Only the CONTROL channel (`ord:` mission orders) and `order_error` rows
+   * are stored now; routine poller results live in the in-memory bus, so this
+   * is the durable half of `lookupOrderResult()` (orderResults.ts) and the
+   * only half that survives a restart. Bounded by `since`: an order's result
+   * is never older than its timeout.
+   */
+  findOrderResult(orderId: string, since = 0): AuditEntry | null {
+    const row = this.db
+      .prepare(
+        `SELECT * FROM audit
+           WHERE action = 'plugin_event' AND at >= ?
+             AND detail LIKE '%"orderId":"' || ? || '"%'
+           ORDER BY rowid DESC LIMIT 1`,
+      )
+      .get(since, orderId) as
+      | {
+          id: string;
+          at: number;
+          actor: string;
+          action: string;
+          subject: string;
+          detail: string;
+          rollback_point: string | null;
+        }
+      | undefined;
+    if (!row) return null;
+    return {
+      id: row.id,
+      at: row.at,
+      actor: row.actor,
+      action: row.action,
+      subject: row.subject,
+      detail: JSON.parse(row.detail) as Record<string, unknown>,
+      rollbackPoint: row.rollback_point,
+    };
+  }
+
+  /**
+   * `plugin_event/order_result` rows from the business channel only, newest
+   * first. Kept for the debug/count paths; the waiters use the order-result
+   * bus and `findOrderResult()` instead of scanning a window.
    */
   listOrderResults(limit = 400): AuditEntry[] {
     const rows = this.db
@@ -619,6 +711,78 @@ export class Store {
         })
       : (this.db.prepare('SELECT COUNT(*) AS n FROM audit WHERE action = ?').get(action) as { n: number });
     return row.n;
+  }
+
+  /**
+   * Audit rows older than `cutoff` for the retention job (2026-11-11).
+   *
+   * Keyset paging on `(at, rowid)`, not OFFSET: the table is being written by
+   * the running backend, and an OFFSET page would skip rows when a delete (or
+   * the routine prune) lands between two pages. `after` is the previous page's
+   * last `(at, rowid)`.
+   */
+  auditBefore(
+    cutoff: number,
+    limit: number,
+    after: { at: number; rowid: number } | null = null,
+  ): (AuditEntry & { rowid: number; routine: boolean })[] {
+    const sql = `SELECT rowid AS rid, * FROM audit
+       WHERE at < ?
+         AND (at > ? OR (at = ? AND rowid > ?))
+       ORDER BY at ASC, rowid ASC LIMIT ?`;
+    const rows = this.db
+      .prepare(sql)
+      .all(
+        cutoff,
+        after?.at ?? Number.MIN_SAFE_INTEGER,
+        after?.at ?? Number.MIN_SAFE_INTEGER,
+        after?.rowid ?? 0,
+        limit,
+      ) as {
+      rid: number;
+      id: string;
+      at: number;
+      actor: string;
+      action: string;
+      subject: string;
+      detail: string;
+      rollback_point: string | null;
+      routine: number;
+    }[];
+    return rows.map((r) => ({
+      rowid: r.rid,
+      id: r.id,
+      at: r.at,
+      actor: r.actor,
+      action: r.action,
+      subject: r.subject,
+      detail: JSON.parse(r.detail) as Record<string, unknown>,
+      rollbackPoint: r.rollback_point,
+      routine: r.routine === 1,
+    }));
+  }
+
+  /** Oldest/newest `at` and the row count below `cutoff` (one indexed scan). */
+  auditRangeBefore(cutoff: number): { count: number; oldest: number | null; newest: number | null } {
+    const row = this.db
+      .prepare('SELECT COUNT(*) AS n, MIN(at) AS lo, MAX(at) AS hi FROM audit WHERE at < ?')
+      .get(cutoff) as { n: number; lo: number | null; hi: number | null };
+    return { count: row.n, oldest: row.lo, newest: row.hi };
+  }
+
+  /**
+   * Delete audit rows by id, in small batches: one statement per batch keeps
+   * the write lock (and the WAL) short on a table the backend is using.
+   */
+  deleteAuditIds(ids: string[], batchSize = 500): number {
+    let deleted = 0;
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const slice = ids.slice(i, i + batchSize);
+      const marks = slice.map(() => '?').join(',');
+      const info = this.db.prepare(`DELETE FROM audit WHERE id IN (${marks})`).run(...slice);
+      deleted += Number(info.changes);
+    }
+    return deleted;
   }
 
   // ------------------------------------------- alerts (legacy mission notices)

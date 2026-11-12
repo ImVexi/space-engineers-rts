@@ -27,6 +27,23 @@ files you create; none are in the repository.
 | `RTS_MAX_ORDERS_PER_MIN` | `60` | Order rate limit. |
 | `RTS_AUTO_MISSION_TYPES` | empty | Mission types that may skip approval. Empty = nothing does. |
 
+## Backend — audit retention
+
+The audit table records accepted and refused orders; it is not a debug log. Three
+routine writers (raw `plugin_event` action results, alert re-deliveries and
+`ack_unknown` for fire-and-forget ids) were silent and are now off at the source,
+so what remains is a material event per change.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `RTS_AUDIT_RETENTION_DAYS` | `7` | Rows older than this are archived, then deleted. `0` disables the job. |
+| `RTS_AUDIT_RETENTION` | unset | `off` disables the job (same as `_DAYS=0`); any other value is ignored. |
+
+Every hour the job streams the expired rows to
+`<RTS_DATA_DIR>/archive/audit-<from>-<to>.csv.gz` and deletes them in small
+batches only after the archive is flushed. A failed archive leaves the rows in
+place and the next hour retries — nothing is deleted that was not first written.
+
 ## Backend — ownership
 
 | Variable | Default | Meaning |
@@ -49,6 +66,12 @@ files you create; none are in the repository.
 
 ## Backend — flight, landing, sim speed
 
+The sim-speed reading is taken from the plugin's telemetry frame (`simRatio`,
+pushed on every frame) and the freshest of the available sources wins: plugin
+telemetry first, then an optional Remote API sample file, then the last known
+value while it is still fresh. `RTS_SIMSPEED_ENV` is therefore unnecessary on a
+live server — leave it empty.
+
 | Variable | Default | Meaning |
 |---|---|---|
 | `RTS_DEMO_SPEED_MPS` | `100` | Cruise cap, clamped to 1..100 (the Remote Control ignores higher). |
@@ -56,6 +79,7 @@ files you create; none are in the repository.
 | `RTS_SIMSPEED_SAMPLE_MS` | `5000` | Sample interval. |
 | `RTS_SIMSPEED_HOLD_MS` | `30000` | Sustained-low window that counts as a hold. |
 | `RTS_SIMSPEED_ENV` | empty | Optional file with Remote API host/port/key. Live instances leave it empty: the plugin's own `sim_ratio` is the source. |
+| `RTS_NAMING_AUTO` | on for test, **off for live** | Automatic grid/block renaming. `1`/`0` forces it. Naming never rewrites an owner's tag form and adds no tag to a grid marked in CustomData only. |
 | `RTS_DEMO_HANDOVER_AGL` | `150` | Height above hull-bottom ground at which the backend hands the landing to the plugin controller (clamped 20..2000). |
 | `RTS_DEMO_TICK_MS` | `1000` | Executor tick. |
 | `RTS_DEMO_GATE_FRESH_MS` | `30000` | Telemetry freshness the comms gate requires. |
@@ -78,7 +102,7 @@ files you create; none are in the repository.
 | Variable | Meaning |
 |---|---|
 | `VITE_DEMO_API_BASE` | API base the site calls. Default same-origin `/api`. |
-| `VITE_DEMO_ENV` | `test` marks a test-world build. Leave unset for survival. |
+| `VITE_DEMO_ENV` | `test` renders the test-world wording; `live` renders the survival wording. Any other value (or none) renders a lockdown screen. |
 
 The build stamps both values into `<head>` as meta tags so a deployed bundle can
 be checked without trusting the page text

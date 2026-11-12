@@ -5,6 +5,7 @@ import { checkBudget } from './budgets.js';
 import { clearRepairBlocks, pauseMission } from './missions.js';
 import { snapDockDecision } from './demo/docking.js';
 import { isRoutineOrderId } from './demo/provision/provisioner.js';
+import { isControlOrderId } from './orderIds.js';
 
 /**
  * Order dispatcher. Every outbound order goes through, in this order:
@@ -53,7 +54,15 @@ const ORDER_TYPE_BY_MISSION: Record<string, OrderType> = {
   replace: 'repair',
 };
 
+/** At most one log line per 5 min for acks of fire-and-forget order ids. */
+const FOREIGN_ACK_LOG_MS = 5 * 60_000;
+
 export class Dispatcher {
+  /** Acks for ids we never persisted (all namespaces but `ord:`): counted only. */
+  private foreignAckCount = 0;
+  private foreignAckByNamespace = new Map<string, number>();
+  private foreignAckLoggedAt = 0;
+
   constructor(
     private readonly store: Store,
     private readonly sender: OrderSender,
@@ -223,20 +232,30 @@ export class Dispatcher {
     return result;
   }
 
-  /** Plugin ack handling is idempotent: duplicate/reordered acks are ignored. */
+  /**
+   * Plugin ack handling is idempotent: duplicate/reordered acks are ignored.
+   *
+   * An ack for an id we never persisted is only an anomaly for the CONTROL
+   * channel (`ord:`). Every other namespace is a fire-and-forget action
+   * (`demo:*`, `provision:*`, `designer:*`, manual `ord-<uuid>`), whose acks are
+   * expected — auditing them produced 34 k `ack_unknown` rows/day, so they are
+   * counted and logged at most once per 5 min instead.
+   */
   onAck(orderId: string, ok: boolean, error: string | undefined, now = this.clock()): void {
     const order = this.store.getOrder(orderId);
     if (!order) {
-      // Ack can arrive before we persisted the order (reordered delivery).
-      // The provisioner's own orders (`provision:*`) are never in the orders
-      // table by design, so their acks are expected and routine.
+      if (!isControlOrderId(orderId)) {
+        this.noteForeignAck(orderId, ok, now);
+        return;
+      }
+      // A control order's ack arriving before we persisted it (reordered
+      // delivery) IS worth a row: it is one of ours and it is out of order.
       this.store.audit({
         actor: 'plugin',
         action: 'ack_unknown',
         subject: orderId,
         detail: { ok, error: error ?? null },
         at: now,
-        routine: isRoutineOrderId(orderId),
       });
       return;
     }
@@ -276,6 +295,30 @@ export class Dispatcher {
         at: now,
       });
     }
+  }
+
+  /**
+   * Acks for fire-and-forget ids: counted, logged at most once per 5 minutes.
+   * Never an audit row — an expected condition is not an anomaly, and at ~40 k
+   * per day these rows were the third-largest audit writer.
+   */
+  private noteForeignAck(orderId: string, ok: boolean, now: number): void {
+    this.foreignAckCount++;
+    const namespace = orderId.includes(':') ? orderId.split(':')[0]! : orderId.split('-')[0]!;
+    this.foreignAckByNamespace.set(namespace, (this.foreignAckByNamespace.get(namespace) ?? 0) + 1);
+    if (now - this.foreignAckLoggedAt < FOREIGN_ACK_LOG_MS) return;
+    this.foreignAckLoggedAt = now;
+    const counts = [...this.foreignAckByNamespace.entries()].map(([ns, n]) => `${ns}=${n}`).join(' ');
+    console.log(
+      `[dispatcher] ${this.foreignAckCount} acks for non-control orders since start (${counts}); ` +
+        `last=${orderId} ok=${ok} — expected (fire-and-forget), not audited`,
+    );
+    this.foreignAckByNamespace.clear();
+  }
+
+  /** Foreign acks counted since start (read by `/api/audit`-adjacent stats). */
+  foreignAckStats(): { total: number; byNamespace: Record<string, number> } {
+    return { total: this.foreignAckCount, byNamespace: Object.fromEntries(this.foreignAckByNamespace) };
   }
 
   private buildOrder(mission: Mission, unitId: string, attempt: number, now: number): OrderRecord {

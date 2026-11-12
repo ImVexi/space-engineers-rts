@@ -143,6 +143,8 @@ export class SurvivalService {
   private loadedFrom: Store | null = null;
   private timer: NodeJS.Timeout | null = null;
   private readonly lastAudit = new Map<string, number>();
+  /** gridId:kind -> signature of the last audited loop state. */
+  private readonly auditSignatures = new Map<string, string>();
 
   constructor(private readonly deps: SurvivalDeps) {
     this.clock = deps.clock ?? (() => Date.now());
@@ -523,6 +525,7 @@ export class SurvivalService {
     this.records.clear();
     this.loadedFrom = null;
     this.lastAudit.clear();
+    this.auditSignatures.clear();
   }
 
   // -------------------------------------------------------------------- tick
@@ -608,7 +611,12 @@ export class SurvivalService {
       });
       if (recommendation) {
         this.raiseAlert(rec, 'return-home', 'warn', recommendation, now);
-        this.audit('demo_survival_recommendation', gridId, { role, need, action: 'none', note: recommendation }, 'survival-loop', now);
+        this.auditOnce(gridId, 'recommendation', now, 'demo_survival_recommendation', gridId, {
+          role,
+          need,
+          action: 'none',
+          note: recommendation,
+        });
       }
       return;
     }
@@ -677,7 +685,7 @@ export class SurvivalService {
         state: 'OK',
       });
       this.raiseAlert(rec, 'return-home', 'critical', rec.reason, now);
-      this.audit('demo_survival_return_refused', gridId, { need, reason: planned.reason }, 'survival-loop', now);
+      this.auditOnce(gridId, 'return-refused', now, 'demo_survival_return_refused', gridId, { need, reason: planned.reason });
       return;
     }
 
@@ -1334,9 +1342,16 @@ export class SurvivalService {
 
   private auditOnce(key: string, kind: string, now: number, action: string, subject: string, detail: Record<string, unknown>): void {
     const mapKey = `${key}:${kind}`;
+    // A loop state that has not moved is not a state change: the row is written
+    // when the reason's SHAPE changes (numbers collapsed, so a draining tank
+    // does not look like an event), and at most once a minute per key.
+    const signature = materialSignature(detail);
+    const signatures = this.auditSignatures;
+    if (signatures.get(mapKey) === signature) return;
     const last = this.lastAudit.get(mapKey) ?? 0;
     if (now - last < POSTPONE_AUDIT_MS) return;
     this.lastAudit.set(mapKey, now);
+    signatures.set(mapKey, signature);
     this.audit(action, subject, detail, 'survival-loop', now);
   }
 
@@ -1353,7 +1368,7 @@ export class SurvivalService {
       });
       return;
     }
-    this.deps.store.createAlert({
+    const row = this.deps.store.createAlert({
       kind,
       severity,
       subjectType: 'grid',
@@ -1364,6 +1379,9 @@ export class SurvivalService {
       firstSeenAt: now,
       lastSeenAt: now,
     });
+    // A new alert IS the transition; the alerts engine does not own these
+    // kinds (see OWNED_KINDS) so this is the only `alert_opened` they get.
+    this.audit('alert_opened', row.id, { kind, severity, subjectId: rec.gridId, message, by: 'survival-loop' }, 'survival-loop', now);
   }
 
   private resolveAlert(gridId: string, now: number, note: string): void {
@@ -1376,6 +1394,18 @@ export class SurvivalService {
     this.deps.store.resolveAlert(existing.id, now);
     this.audit('demo_survival_alert_resolved', gridId, { kind, note }, 'survival-loop', now);
   }
+}
+
+/**
+ * What "the same state" means for a loop row: the detail with its numbers
+ * collapsed, so a tank draining 1 %/min or a distance that creeps does not
+ * read as an event, while `STRANDED -> RETURN_PENDING` or a different reason
+ * shape does. Used only to decide whether a loop row is a state CHANGE.
+ */
+export function materialSignature(detail: Record<string, unknown>): string {
+  return JSON.stringify(detail)
+    .replace(/\d+(?:\.\d+)?/g, '#')
+    .replace(/\s+/g, ' ');
 }
 
 /** Altitude above the catalogue surface at a position, rounded; null unknown. */

@@ -13,6 +13,7 @@ import type { Store, UnitRecord, GroupRecord } from '../store.js';
 import type { PluginHub, StateHub } from '../pluginHub.js';
 import { approveMission, createMission, supersedeGridMissions } from '../missions.js';
 import { isFresh } from '../comms.js';
+import { waitForOrderResult } from '../orderResults.js';
 import { buildGraph, loadPlanetCatalog, resolveTemplate, whatIfRemove } from '../planner/index.js';
 import { resolveDemoEnv, type DemoEnv } from './env.js';
 import { getStandIn, getStandInByName, hardwareSummary, listStandIns, STANDINS, type StandIn } from './standins.js';
@@ -671,23 +672,19 @@ async function liveShipHardware(deps: DemoDeps, gridId: string): Promise<LiveShi
     issuedAt: now,
     expiresAt: now + 4_000,
   };
+  const sinceRowid = deps.store.maxAuditRowid();
   if (!deps.hub.send(frame)) return null;
-  const deadline = Date.now() + 4_000;
-  while (Date.now() < deadline) {
-    for (const entry of deps.store.listOrderResults(160)) {
-      const detail = entry.detail as { eventType?: string; data?: { orderId?: string; result?: Record<string, unknown> } };
-      if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result' || detail?.data?.orderId !== orderId) continue;
-      const result = (detail.data.result ?? {}) as Record<string, unknown>;
-      const thrusters = (result.thrusters ?? {}) as Record<string, unknown>;
-      const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
-      const value: LiveShipHardware = {
-        massKg: typeof result.massKg === 'number' && Number.isFinite(result.massKg) ? result.massKg : null,
-        thrust: { atmo: n(thrusters.atmoN), ion: n(thrusters.ionN), h2: n(thrusters.h2N) },
-      };
-      shipHardwareCache.set(gridId, { at: Date.now(), value });
-      return value;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  const hit = await waitForOrderResult(deps.store, orderId, 4_000, { sinceRowid });
+  if (hit && hit.ok !== false) {
+    const result = (hit.result ?? {}) as Record<string, unknown>;
+    const thrusters = (result.thrusters ?? {}) as Record<string, unknown>;
+    const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+    const value: LiveShipHardware = {
+      massKg: typeof result.massKg === 'number' && Number.isFinite(result.massKg) ? result.massKg : null,
+      thrust: { atmo: n(thrusters.atmoN), ion: n(thrusters.ionN), h2: n(thrusters.h2N) },
+    };
+    shipHardwareCache.set(gridId, { at: Date.now(), value });
+    return value;
   }
   return null;
 }

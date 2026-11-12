@@ -19,7 +19,16 @@ import type { Store } from '../../store.js';
 import type { PluginHub } from '../../pluginHub.js';
 import { decideOrderChannel } from '../channel.js';
 import { resolveSurvivalMode, SURVIVAL_REASON } from '../survival.js';
-import { resolveRole, shipRoles, hintsFromPluginGrid, type RoleHint, type ShipRole } from '../roles.js';
+import {
+  resolveGridRole,
+  isAutomatableRole,
+  isBaseRole,
+  shipRoles,
+  hintsFromPluginGrid,
+  type RoleHint,
+  type RoleResolution,
+  type ShipRole,
+} from '../roles.js';
 import { isLiveInstance } from '../ownership.js';
 import { waitForOrderResult } from '../../orderResults.js';
 
@@ -400,16 +409,30 @@ function tagOf(profiles: ProfilesFile, tags: string[]): ProfileKey | null {
 }
 
 /**
- * Which profile (if any) a grid may receive. The in-game ROLE gates it first:
- * a PERSONAL grid is never provisioned and an OFF grid is never touched. A
- * BASE (full tag or the `[BASE]` alias) gets the station profile; MANAGED keeps
- * the legacy per-PB tag mapping, so an untagged/only-`HERMES_ROLE=managed` grid
- * is still not provisioned unless it carries `[HERMES-TEST]`.
+ * Which profile (if any) a grid may receive. The SHARED role resolution decides
+ * it (see `roles.ts`): a PERSONAL grid is never provisioned, an OFF grid is
+ * never touched, a BASE grid (any alias, on any block or `HERMES_ROLE=base`)
+ * gets the station profile, and a MANAGED grid gets the drone profile whatever
+ * spelling set it (`[HERMES-MANAGED]`, `[MANAGED]`, the legacy `[HERMES-TEST]`,
+ * `HERMES_ROLE=managed`).
+ *
+ * `resolution` is the registry's resolution (with the live ownership policy
+ * applied) and should be passed whenever one exists. Without it the role is
+ * resolved from the grid row alone, test-default so a pure call can never
+ * mistake "no policy" for "live and foreign" - the untagged default still never
+ * provisions anything.
  */
-export function profileForGrid(profiles: ProfilesFile, grid: TaggedGrid): ProfileKey | null {
-  const res = resolveRole({ hints: hintsFromPluginGrid(grid) });
+export function profileForGrid(
+  profiles: ProfilesFile,
+  grid: TaggedGrid,
+  resolution?: RoleResolution,
+): ProfileKey | null {
+  const res = resolution ?? resolveGridRole(grid, { live: false });
   if (res.role === 'personal' || res.role === 'off') return null;
-  if (res.role === 'base') return 'BASE';
+  if (isBaseRole(res)) return 'BASE';
+  if (isAutomatableRole(res)) return 'DRONE';
+  // Legacy shape: no role hints in the payload at all (old plugin, or a grid
+  // whose mark was only the PB name the plugin reported as a tag).
   return tagOf(profiles, grid.tags ?? []);
 }
 
@@ -457,14 +480,21 @@ export class Provisioner {
     if (this.issues.length > 50) this.issues.length = 50;
   }
 
-  /** Owner-tagged grids with a profile; everything else is never modelled. */
+  /**
+   * Grids the automatic features own, with the profile they get. The shared
+   * role resolution decides (any BASE/MANAGED spelling), and on the live
+   * instance the registry already turned a foreign grid OFF, so a copied tag on
+   * somebody else's hull never becomes a capability row.
+   */
   private ownedGrids(grids: TaggedGrid[], profiles: ProfilesFile): { grid: TaggedGrid; profile: ProfileKey }[] {
     const out: { grid: TaggedGrid; profile: ProfileKey }[] = [];
     for (const grid of grids) {
-      const profile = profileForGrid(profiles, grid);
+      const profile = profileForGrid(profiles, grid, shipRoles.resolution(grid.gridId));
       if (!profile) continue;
       const ownerIds = [grid.owner, ...(grid.owners ?? [])].filter((v): v is string => typeof v === 'string');
-      if (!ownerIds.includes(profiles.owner.identityId)) continue;
+      // Test instance keeps the legacy owner-identity rule; live relies on the
+      // registry's policy (identity OR faction).
+      if (!isLiveInstance() && !ownerIds.includes(profiles.owner.identityId)) continue;
       out.push({ grid, profile });
     }
     return out;
@@ -485,10 +515,15 @@ export class Provisioner {
         record.radio.publishedState = radio.radioState;
         changed = true;
       }
+      // The role travels with the capability row so the gate/network explain
+      // "base" vs "managed" from the same decision that chose the profile
+      // (a legacy long tag in `tags` is still a BASE decision).
+      const role: ShipRole = profile === 'BASE' ? 'base' : 'managed';
       return {
         gridId: grid.gridId,
         name: record?.name ?? grid.name ?? grid.pbName ?? grid.gridId,
         profile,
+        role,
         broadcasting: radio.broadcasting,
         radioRadiusM: radio.radioRadiusM,
         // WHICH fact this is + how old, so the gate and the audit can tell
@@ -865,7 +900,8 @@ export class Provisioner {
           skipped++;
           continue;
         }
-        const profile = profileForGrid(profiles, grid);
+        const resolution = shipRoles.resolution(grid.gridId);
+        const profile = profileForGrid(profiles, grid, resolution);
         if (!profile) {
           skipped++;
           continue;
@@ -873,8 +909,7 @@ export class Provisioner {
         // T79: the registry's role gate is the send-boundary rule on the live
         // instance (untagged -> OFF, foreign/NPC owner -> OFF). Asking it here
         // means provisioning cannot act on a grid the executor would refuse.
-        const liveRole = shipRoles.roleOf(grid.gridId);
-        if (liveRole === 'off' || liveRole === 'personal') {
+        if (resolution.role === 'off' || resolution.role === 'personal') {
           skipped++;
           continue;
         }
@@ -1154,8 +1189,9 @@ export interface ProvisionControlSource {
 }
 
 /**
- * Control sources for the comms gate: provisioned `[HERMES-BASE]` grids whose
- * radio antenna was read back as broadcasting, with a positive radius.
+ * Control sources for the comms gate: provisioned BASE-role grids (any tag
+ * spelling: `[HERMES-BASE]` or `[BASE]`, on any block or `HERMES_ROLE=base`)
+ * whose radio antenna was read back as broadcasting, with a positive radius.
  *
  * Wiring note for the gate owner: call this with `provisioner.state()` and use
  * the returned ids as the set of control sources. The antenna state is GAME

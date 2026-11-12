@@ -13,7 +13,8 @@ import { PROVISION_RADIO_GOOD_MS } from './provision/provisioner.js';
  *   1. the grid has fresh plugin telemetry with its antenna link `up`
  *      (GAME), and
  *   2. the network model can reach it: a radio path from a control source,
- *      where control sources are the provisioned `[HERMES-BASE]` grids whose
+ *      where control sources are the provisioned BASE-role grids (any tag
+ *      spelling) whose
  *      antenna was read back as broadcasting, plus any live `Connected` laser
  *      pair (GAME edge).
  *
@@ -203,7 +204,7 @@ export function evaluateGate(input: GateInput): CommsGate {
     return {
       ...base,
       reason:
-        'grid hardware has no capability profile: it is not owner-tagged [HERMES-BASE]/[HERMES-TEST], so the provisioner has no radio radius for it and it is not assumed reachable',
+        'grid hardware has no capability profile: its role is not a provisioned one ([HERMES-BASE]/[BASE] or [HERMES-MANAGED]/[MANAGED]/[HERMES-TEST]), so the provisioner has no radio radius for it and it is not assumed reachable',
     };
   }
   if (plannerPath === false) {
@@ -215,7 +216,7 @@ export function evaluateGate(input: GateInput): CommsGate {
       reason:
         sources.length === 0
           ? noAntenna.length
-            ? `${noAntenna.map((b) => b.name).join(', ')} is a provisioned [HERMES-BASE] but has NO antenna block ` +
+            ? `${noAntenna.map((b) => b.name).join(', ')} is a provisioned base ([HERMES-BASE]/[BASE]) but has NO antenna block ` +
               '(0 antennas read back), so no control source can reach this grid: build an antenna on the base. ' +
               'This is a fact about the world, not a telemetry problem.'
             : 'no provisioned base with a broadcasting radio is registered, so there is no control source to reach'

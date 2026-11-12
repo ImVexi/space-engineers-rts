@@ -34,3 +34,17 @@ lower threshold.
 - It is not a fix for a server that is perpetually below 0.95; that is a load
   problem (grid count, physics, mods), and the backend is only a small part of
   the game-thread budget.
+
+## When the world is slow, look at the host first
+
+A measured lesson: the sim speed sat at ~0.5 while a **second Space Engineers
+server** (the test world) ran on the same VM. Two dedicated servers on one host
+split the CPU, and neither keeps up. The game itself, not the backend, was the
+cost.
+
+- Run one Space Engineers server per VM. Stop the test server before you judge
+  live performance, and leave it stopped when you are not testing.
+- Check the host (`docker stats`, `top`) before you change `RTS_SIMSPEED_MIN`.
+  Raising the threshold hides the symptom and blocks legitimate orders.
+- The same rule applies to the backend: keep it off the game host if that host is
+  already at one server's worth of CPU.

@@ -61,3 +61,41 @@ single bearer token and are not hardened for the public internet: there is no
 TLS, no rate-limit beyond the order cap, and the map exposes your world state.
 Bind to the LAN, keep the token secret, and do not port-forward the backend.
 The game server port is separate; the plugin only makes an outbound connection.
+
+## Sharing the panel with a crew
+
+The panel is an **operator** panel, not a player-facing one. Every route that
+needs the token can also send orders, move the kill switch and read your world
+state, so the token is a password to your fleet. If other people should see the
+map:
+
+- **Never expose the backend raw.** Do not port-forward `RTS_PORT` and do not
+  put the bare `http://<host>:<port>` behind a tunnel. There is no login page.
+- **Put an authenticating proxy in front.** Either a reverse proxy with per-user
+  auth (Caddy:
+
+  ```
+  se-rts.example.com {
+      basic_auth {
+          crew <bcrypt-hash>
+      }
+      reverse_proxy 127.0.0.1:8761
+  }
+  ```
+
+  ) or Cloudflare Access in front of the tunnel. Either way TLS terminates at
+  the proxy and the crew gets its own credentials.
+- **Inject the backend token server-side.** The browser should receive the
+  backend token from the proxy (a header rewrite or a tiny token endpoint), never
+  from a bookmark, a chat message or a build-time constant. One token per
+  deployment, rotated when someone leaves.
+- **Block the sharp edges publicly.** `/plugin` is the plugin WebSocket and
+  `/api/test/*` is the test surface; neither belongs on a public hostname. Deny
+  them at the proxy (`@blocked path /plugin* /api/test/*` → `respond 403`) and
+  leave them reachable only from the LAN.
+- **Keep the plugin socket LAN-only.** The plugin connects to `ws://<lan-ip>:
+  <port>/plugin`; it never needs a public hostname, and the token in
+  `plugin.json` should be the same secret you are protecting.
+
+Read-only dashboards and screenshots are fine to share. Command access is not:
+give the crew the map, keep the orders to people who know what a mission costs.

@@ -202,6 +202,53 @@ export function hintsFromInspect(result: {
   return tagged.length > 0 ? tagged : hintsFromBlockRows(result.blocks);
 }
 
+/**
+ * The role of one `list_tagged` grid row, resolved from the SAME hints and the
+ * SAME aliases everywhere (provisioner, gate, network, naming). Owners and
+ * their faction tags ride along so the live ownership rule applies here too.
+ *
+ * `live` defaults to the process env; a caller that already holds the registry
+ * resolution should pass it instead of re-resolving, so a foreign grid can
+ * never be provisioned by a path that forgot the ownership policy.
+ */
+export function resolveGridRole(
+  grid: {
+    roleHints?: unknown;
+    blocks?: unknown;
+    owner?: string | null;
+    owners?: ReadonlyArray<string | null | undefined> | null;
+    ownerFactions?: ReadonlyArray<string | null | undefined> | null;
+  } | null | undefined,
+  opts: { live?: boolean; policy?: OwnerPolicy | null; site?: ShipRole | null } = {},
+): RoleResolution {
+  const owners = [grid?.owner, ...(grid?.owners ?? [])].filter(
+    (v): v is string => typeof v === 'string' && v.length > 0,
+  );
+  return resolveRole({
+    hints: hintsFromPluginGrid(grid),
+    site: opts.site ?? null,
+    owners,
+    ownerFactions: grid?.ownerFactions ?? null,
+    live: opts.live,
+    policy: opts.policy ?? null,
+  });
+}
+
+/**
+ * A grid the automatic features may provision/automate: its role is MANAGED
+ * because the owner said so (an in-game tag in ANY spelling, or a site toggle).
+ * The untagged default never counts - on the test instance that default is
+ * MANAGED, and an unmarked grid must not become provisioned because of it.
+ */
+export function isAutomatableRole(res: RoleResolution): boolean {
+  return res.role === 'managed' && (res.roleSource === 'in-game-tag' || res.roleSource === 'site-toggle');
+}
+
+/** A station: a control source once its antenna reads back as broadcasting. */
+export function isBaseRole(res: RoleResolution): boolean {
+  return res.role === 'base';
+}
+
 
 /**
  * Resolve a grid's role from its in-game hints and the stored site toggle.

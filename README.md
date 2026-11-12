@@ -20,18 +20,37 @@ server you can restart.
 - **Survival-safe control.** No cheats in the binary: no spawn, clone, delete,
   refill, teleport, orientation write or save action. The plugin only uses
   blocks and APIs a player could use from the cockpit.
-- **Ship roles by tag.** `[HERMES-MANAGED]`, `[PERSONAL]`, `[HERMES-BASE]`,
-  `[OFF]` (or `HERMES_ROLE=` in CustomData). Untagged grids get no orders.
+- **Ship roles by tag, short or long.** `[BASE]`, `[MANAGED]`, `[PERSONAL]`,
+  `[OFF]` and their `[HERMES-*]` spellings (or `HERMES_ROLE=` in CustomData) are
+  equally strong; one resolver decides for every feature. Untagged grids get no
+  orders on a live server.
 - **Survival refuel loop.** A managed ship that runs low returns to its base,
-  lands, waits for refuel/charge, then relaunches on your approval.
+  lands, waits for refuel/charge, then relaunches on your approval. One that
+  cannot make it home is reported `STRANDED`, never launched.
 - **Landing controller.** Final descent is flown in-plugin from 150 m AGL to
   touchdown, with a hull-bottom ground datum and a gear lock.
 - **Coverage planner.** Radio-relay and laser-backbone placement with terrain,
   redundancy and cost-per-covered-cell scoring; the heatmap is the authority.
 - **Sim-speed aware.** Orders are held when the world slows below 0.95 sim
   speed, using the plugin's own `simRatio` sample (no Remote API needed).
+- **Quiet, bounded audit.** Routine poller traffic is counted, not stored; the
+  audit keeps material events and archives anything older than
+  `RTS_AUDIT_RETENTION_DAYS` (7) to `.csv.gz` before deleting it.
 - **Approval and budgets.** Every mission has a budget and a loss limit; the
   kill switch stops reconciliation and dispatch.
+
+## Tags at a glance
+
+| Role | Short | Long | CustomData | Meaning |
+|---|---|---|---|---|
+| `MANAGED` | `[MANAGED]` | `[HERMES-MANAGED]` (or legacy `[HERMES-TEST]`) | `HERMES_ROLE=managed` | the system may fly it |
+| `PERSONAL` | `[PERSONAL]` | `[HERMES-PERSONAL]` | `HERMES_ROLE=personal` | your ship; only confirmed orders |
+| `BASE` | `[BASE]` | `[HERMES-BASE]` | `HERMES_ROLE=base` | station / control source |
+| `OFF` | `[OFF]` | `[HERMES-OFF]` | `HERMES_ROLE=off` | no orders at all |
+
+Put the tag on any block of the grid. On `RTS_ENV=live` an untagged grid is
+`OFF`, and a non-`OFF` role also needs the grid to be owned by you
+(`RTS_OWNER_STEAM_IDS`, or your faction).
 
 ## Requirements
 
@@ -48,7 +67,9 @@ No game assets are included. You copy the reference DLLs from your own
 `DedicatedServer64` folder to build the plugin — they are Keen's and are not
 redistributable.
 
-## Install
+## Quick start
+
+Four steps, one LAN. Nothing below needs internet access after `npm ci`.
 
 ### 1. Get the plugin
 
@@ -114,9 +135,10 @@ npm run demo:build
 
 ### 4. In game
 
-Put a powered radio antenna on one base and tag a block `[HERMES-BASE]`. Tag the
-hulls the system may fly `[HERMES-MANAGED]`; tag everything else `[PERSONAL]` or
-`[OFF]`. Full walkthrough: [docs/IN-GAME-SETUP.md](docs/IN-GAME-SETUP.md).
+Put a powered radio antenna on one base and tag a block `[BASE]` (or
+`[HERMES-BASE]`). Tag the hulls the system may fly `[MANAGED]`; tag everything
+else `[PERSONAL]` or `[OFF]`. Untagged grids get nothing. Full walkthrough:
+[docs/IN-GAME-SETUP.md](docs/IN-GAME-SETUP.md).
 
 ## Configuration
 
@@ -136,6 +158,8 @@ Environment variables are the source of truth. The common ones:
 | `RTS_SAVE_DIR` | `data/save` | Local copy of the world save for the read-only handoff detector. |
 | `RTS_DEMO_DIST` | `packages/demo-site/dist` | Built site served at `/demo/`. |
 | `RTS_SIMSPEED_MIN` | `0.95` | No new flight orders below this sim speed. |
+| `RTS_NAMING_AUTO` | on for test, off for live | Automatic grid/block renaming. Naming keeps your tag form and never invents one. |
+| `RTS_AUDIT_RETENTION_DAYS` | `7` | Archive audit rows older than this to `.csv.gz`, then delete. `0` disables. |
 | `RTS_DEMO_SPEED_MPS` | `100` | Cruise cap for a flight leg. |
 | `RTS_STATION` | `1` | Allow a holding relay to be converted to a station. |
 
@@ -169,6 +193,7 @@ powered antenna. Details and fixes: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTI
 - [docs/IN-GAME-SETUP.md](docs/IN-GAME-SETUP.md) — tags, base, roles
 - [docs/SAFETY.md](docs/SAFETY.md) — what the system refuses and why
 - [docs/FAQ.md](docs/FAQ.md) — short answers to the usual questions
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) — what changed, newest first
 - [docs/architecture.md](docs/architecture.md) — components and data flow
 - [docs/ship-roles.md](docs/ship-roles.md) — roles, tags, ownership
 - [docs/survival-mode.md](docs/survival-mode.md), [docs/survival-loop.md](docs/survival-loop.md)

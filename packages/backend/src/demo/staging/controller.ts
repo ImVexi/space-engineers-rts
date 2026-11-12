@@ -21,6 +21,7 @@ import type { Store, UnitRecord } from '../../store.js';
 import { decideStaging, actuatorKey, maySwitch, phaseFor, type StagingDecision, type StagingMode } from './policy.js';
 import { hardwareFor, hardwareFromLiveProfile, type StagingHardware } from './hardware.js';
 import { decideOrderChannel } from '../channel.js';
+import { lookupOrderResult } from '../../orderResults.js';
 import { resolveSurvivalMode, SURVIVAL_REASON } from '../survival.js';
 
 export interface StagingOrder {
@@ -778,43 +779,23 @@ interface PluginProfileResult {
   result?: Record<string, unknown> | null;
 }
 
-/** Resolve a `profile` order from the audit trail (read-only plugin action). */
+/** Resolve a `profile` order from the result bus (memory) or the audit trail. */
 function findProfileResult(store: Store, orderId: string): PluginProfileResult | null {
-  for (const entry of store.listOrderResults(400)) {
-    const detail = entry.detail as {
-      eventType?: string;
-      data?: { orderId?: string; ok?: boolean; error?: string; result?: Record<string, unknown> | null };
-    };
-    if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result') continue;
-    const data = detail.data;
-    if (data?.orderId !== orderId) continue;
-    return { ok: data.ok !== false, error: data.error, result: data.result ?? null };
-  }
-  return null;
+  const hit = lookupOrderResult(store, orderId);
+  if (!hit) return null;
+  return { ok: hit.ok !== false, error: hit.error, result: hit.result ?? null };
 }
 
 function findResult(store: Store, orderId: string): PluginTestResult | null {
-  for (const entry of store.listOrderResults(400)) {
-    const detail = entry.detail as {
-      eventType?: string;
-      data?: {
-        orderId?: string;
-        ok?: boolean;
-        error?: string;
-        result?: { blocksWithErrors?: number; count?: number } | null;
-      };
-    };
-    if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result') continue;
-    const data = detail.data;
-    if (data?.orderId !== orderId) continue;
-    return {
-      ok: data.ok !== false,
-      error: data.error,
-      blocksWithErrors: data.result?.blocksWithErrors ?? 0,
-      count: data.result?.count ?? -1,
-    };
-  }
-  return null;
+  const hit = lookupOrderResult(store, orderId);
+  if (!hit) return null;
+  const result = (hit.result ?? {}) as { blocksWithErrors?: number; count?: number };
+  return {
+    ok: hit.ok !== false,
+    error: hit.error,
+    blocksWithErrors: result.blocksWithErrors ?? 0,
+    count: result.count ?? -1,
+  };
 }
 
 function numeric(value: unknown): number | null {

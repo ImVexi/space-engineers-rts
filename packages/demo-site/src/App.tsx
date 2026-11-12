@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Camera } from 'three';
 import { api, ApiError, getApiToken, setApiToken } from './api';
-import { lockRefusal, TEST_SERVER_BADGE } from './config';
+import { lockRefusal, SERVER_BADGE, IS_LIVE } from './config';
 import type {
   DemoNode,
   DemoState,
@@ -123,7 +123,7 @@ function Lockdown({ reason }: { reason: string }) {
     <div className="lockdown" role="alert" data-testid="lockdown">
       <h1>Demo site locked</h1>
       <p>{reason}</p>
-      <p className="muted">This build is hard-locked to the isolated SE-RTS Test Lab server. There is no production fallback by design.</p>
+      <p className="muted">This build refuses to run without a target environment. There is no production fallback by design.</p>
     </div>
   );
 }
@@ -132,7 +132,7 @@ function TokenGate({ onSubmit, error }: { onSubmit: (token: string) => void; err
   const [value, setValue] = useState('');
   return (
     <div className="boot token-gate" data-testid="token-gate">
-      <h1>{TEST_SERVER_BADGE}</h1>
+      <h1>{SERVER_BADGE}</h1>
       <p>This LAN-only demo needs the backend bearer token once. It is stored in this browser and never embedded in the build.</p>
       <form
         className="token-form"
@@ -1434,8 +1434,8 @@ export default function App() {
   if (!state) {
     return (
       <div className="boot">
-        <h1>{TEST_SERVER_BADGE}</h1>
-        <p>{error ? `Backend unreachable: ${error}` : 'Loading test-lab state…'}</p>
+        <h1>{SERVER_BADGE}</h1>
+        <p>{error ? `Backend unreachable: ${error}` : IS_LIVE ? 'Loading live state…' : 'Loading test-lab state…'}</p>
         {error && (
           <button type="button" onClick={() => void refresh()}>
             Retry
@@ -1653,7 +1653,7 @@ export default function App() {
         <header className="hud-top">
           <div className="brand">
             <strong>SE Relay Network</strong>
-            <span className="subtitle">SE-RTS Test Lab</span>
+            <span className="subtitle">{IS_LIVE ? 'Survival instance' : 'SE-RTS Test Lab'}</span>
           </div>
           <div className="hud-stats">
             <span className="hud-group" data-group="status" aria-label="Status">

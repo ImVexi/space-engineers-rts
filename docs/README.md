@@ -14,6 +14,7 @@ reference you can read when you need it.
 | [SAFETY.md](SAFETY.md) | What the build cannot do and what the backend refuses |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Plugin not loading, no connection, refusals |
 | [FAQ.md](FAQ.md) | Short answers to the usual questions |
+| [CHANGELOG.md](CHANGELOG.md) | What changed, newest first |
 
 ## Reference
 

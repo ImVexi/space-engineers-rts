@@ -40,6 +40,28 @@ export const ALERT_COOLDOWNS_MS: Record<AlertKind, number> = {
 
 const EVALUATE_INTERVAL_MS = 30_000;
 
+/**
+ * Kinds this engine owns: it is the only thing that opens them, so it is the
+ * only thing allowed to auto-resolve them.
+ *
+ * Auto-resolving a kind it does not evaluate is what made alerts flap. The
+ * survival loop opens `stranded` / `return-home` itself (in `raiseAlert`), and
+ * this engine never produced a candidate for those kinds — so every 30 s
+ * evaluation "cleared" each of them, the survival loop re-created it, and the
+ * pair wrote an `alert_resolved` + `alert_resolved_delivered` row per grid per
+ * tick with no matching `alert_opened` (measured 2026-11-11: 70 distinct ids
+ * resolved in 5 minutes, zero opens).
+ */
+const OWNED_KINDS: ReadonlySet<string> = new Set(Object.keys(ALERT_COOLDOWNS_MS));
+
+/**
+ * How long a condition must stay absent before the alert is resolved, ms.
+ * One full evaluation interval: the absence must be seen by TWO consecutive
+ * evaluations, so one skipped sample (a poller hiccup, a tick that ran before
+ * its input arrived) can never resolve and re-open an alert.
+ */
+export const RESOLVE_HOLD_MS = EVALUATE_INTERVAL_MS;
+
 export interface AlertsServiceDeps {
   store: Store;
   clock?: () => number;
@@ -68,6 +90,8 @@ export class AlertsService {
   private readonly delivery: AlertDelivery;
   private readonly lastFiredAt = new Map<string, number>();
   private readonly deliveredAt = new Map<string, number>();
+  /** alert id -> first evaluation that no longer saw its condition. */
+  private readonly clearSince = new Map<string, number>();
   private timer: NodeJS.Timeout | null = null;
   private lastEvaluatedAt: number | null = null;
   private lastError: string | null = null;
@@ -146,7 +170,7 @@ export class AlertsService {
     const opened: Alert[] = [];
     const updated: Alert[] = [];
     const resolved: Alert[] = [];
-    const toDeliver: { alert: Alert; variant: DeliveryVariant }[] = [];
+    const toDeliver: { alert: Alert; variant: DeliveryVariant; escalated?: boolean }[] = [];
 
     const active = this.deps.store.listAlertRecords({ state: ['open', 'acked'], limit: 1000 });
     const activeByKey = new Map(active.map((a) => [keyOf(a.kind, a.subjectId), a]));
@@ -170,7 +194,7 @@ export class AlertsService {
         if (row) {
           updated.push(row);
           if (escalated || this.shouldDeliverUpdate(row, evaluatedAt, candidate.kind)) {
-            toDeliver.push({ alert: row, variant: 'updated' });
+            toDeliver.push({ alert: row, variant: 'updated', escalated });
           }
         }
         continue;
@@ -211,10 +235,24 @@ export class AlertsService {
     }
 
     // AUTO-RESOLVE: an active alert whose condition is absent this evaluation.
+    // Only kinds this engine opened, and only after the absence has held for
+    // RESOLVE_HOLD_MS (hysteresis: one missing sample is not a state change).
     for (const alert of active) {
-      if (seen.has(keyOf(alert.kind, alert.subjectId))) continue;
+      if (!OWNED_KINDS.has(alert.kind)) continue;
+      const key = keyOf(alert.kind, alert.subjectId);
+      if (seen.has(key)) {
+        this.clearSince.delete(alert.id);
+        continue;
+      }
+      const since = this.clearSince.get(alert.id);
+      if (since === undefined) {
+        this.clearSince.set(alert.id, evaluatedAt);
+        continue;
+      }
+      if (evaluatedAt - since < RESOLVE_HOLD_MS) continue;
       const row = this.deps.store.resolveAlert(alert.id, evaluatedAt);
       if (!row) continue;
+      this.clearSince.delete(alert.id);
       this.deliveredAt.delete(alert.id);
       this.deps.store.audit({
         actor: 'alerts',
@@ -228,6 +266,7 @@ export class AlertsService {
           count: row.count,
           reason: 'condition cleared',
           auto: true,
+          absentForMs: evaluatedAt - since,
         },
         at: evaluatedAt,
       });

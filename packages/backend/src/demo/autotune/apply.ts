@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 import type { Store } from '../../store.js';
 import type { ProfileSender } from '../power/poller.js';
 import { decideOrderChannel } from '../channel.js';
+import { waitForOrderResult } from '../../orderResults.js';
 import { resolveSurvivalMode, SURVIVAL_REASON } from '../survival.js';
 import { parseProfileResult } from '../power/parse.js';
 import { shipRoles } from '../roles.js';
@@ -251,17 +252,10 @@ function parseSetResult(result: Record<string, unknown>): { ok: boolean; applied
 }
 
 async function waitForResult(deps: ApplyDeps, orderId: string, timeoutMs: number): Promise<Record<string, unknown> | null> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    for (const entry of deps.store.listOrderResults(500)) {
-      const detail = entry.detail as { eventType?: string; data?: { orderId?: string; result?: Record<string, unknown> } };
-      if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result') continue;
-      if (detail.data?.orderId !== orderId) continue;
-      return detail.data.result ?? {};
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  return null;
+  // Memory first (the bus holds the frame on the tick it arrives), then the
+  // audit row for a control-channel order.
+  const hit = await waitForOrderResult(deps.store, orderId, timeoutMs);
+  return hit && hit.ok !== false ? (hit.result ?? {}) : null;
 }
 
 function round(v: number, digits: number): number {

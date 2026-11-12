@@ -17,6 +17,7 @@ export {
   startProvisioner,
   resetProvisionerForTests,
   controlSourcesFromState,
+  profileForGrid,
   teleportOwner,
   type ProvisionDeps,
   type ProvisionState,

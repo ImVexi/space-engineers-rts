@@ -19,9 +19,12 @@ import { readDesignerSettings } from './demo/designer/settings.js';
 import { resolveDemoEnv } from './demo/env.js';
 import { PlayerTracker } from './demo/players/index.js';
 import { isRoutineOrderId, loadProfiles, requestProvisionPass, requestProvisionPassForAck, requestProvisionPassForGrid, callPlugin } from './demo/provision/provisioner.js';
+import { isControlOrderId } from './orderIds.js';
 import { shipRoles } from './demo/roles.js';
 import { buildOwnerPolicy, isLiveInstance, parseOwnerSteamIds, type OwnerPolicy } from './demo/ownership.js';
 import { orderResults } from './orderResults.js';
+import { AuditRetention, retentionDaysFromEnv } from './auditRetention.js';
+import path from 'node:path';
 import type http from 'node:http';
 
 /**
@@ -101,6 +104,12 @@ export interface Runtime {
   alerts: AlertsService | null;
   /** T66 survival loop (return-home, NEEDS_REFUEL, owner-approved relaunch). */
   survival: SurvivalService | null;
+  /**
+   * Audit retention (2026-11-11): archives then deletes rows older than
+   * `RTS_AUDIT_RETENTION_DAYS` hourly. `run()` is callable from a test; the
+   * timer starts with the other loops.
+   */
+  auditRetention: AuditRetention;
   detector: DetectorService;
   server: http.Server;
   startedAt: number;
@@ -136,7 +145,7 @@ export function createRuntime(opts: RuntimeOptions): Runtime {
 
   // T79 live ownership. On the owner's shared world a non-OFF role additionally
   // requires the grid's big owner to be a configured owner identity or in his
-  // faction. The Steam ids come from `RTS_OWNER_STEAM_IDS` (default: the owner); the
+  // faction. The Steam ids come from `RTS_OWNER_STEAM_IDS` (default: empty); the
   // identities/faction tags are resolved from the players telemetry the plugin
   // already sends (plus the provisioner's owner identity), rebuilt lazily so a
   // friend added later is picked up once he has been observed.
@@ -235,6 +244,18 @@ export function createRuntime(opts: RuntimeOptions): Runtime {
   const seenGridIds = new Set<string>();
 
   /**
+   * Audit retention: hourly, archives rows older than the window to
+   * `data/archive/` and deletes them afterwards. Configurable off
+   * (`RTS_AUDIT_RETENTION=off` or `RTS_AUDIT_RETENTION_DAYS=0`).
+   */
+  const auditRetention = new AuditRetention({
+    store,
+    archiveDir: path.join(config.dataDir, 'archive'),
+    retentionDays: retentionDaysFromEnv(),
+    clock,
+  });
+
+  /**
    * One telemetry frame, from the plugin hub or a test.
    *
    * Extracted from the hub callback so a booted runtime can be fed a real frame
@@ -309,11 +330,15 @@ export function createRuntime(opts: RuntimeOptions): Runtime {
       },
       onTelemetry: (msg: TelemetryMessage) => handleTelemetry(msg),
       onEvent: (msg: EventMessage) => {
-        // A poller order's result (`provision:*`) is routine traffic: recorded
-        // on the routine channel (the order-result lookups read it), never in
-        // the business audit where a landing's evidence lives.
+        // A poller or action result is ROUTINE traffic: recorded on the routine
+        // channel (the order-result lookups read it), never in the business
+        // audit where a landing's evidence lives. Only a result for a
+        // CONTROL-channel order (`ord:` — persisted, mission-driven) is a
+        // state change; `provision:*` polls and the executor's `demo:*` actions
+        // are fire-and-forget. Verify #4: 46 k `plugin_event` order_results,
+        // 45 k of them non-routine.
         const orderId = (msg.data as { orderId?: unknown } | undefined)?.orderId;
-        const routine = msg.eventType === 'order_result' && isRoutineOrderId(orderId);
+        const routine = msg.eventType === 'order_result' && !isControlOrderId(orderId);
         store.audit({
           actor: 'plugin',
           action: 'plugin_event',
@@ -525,6 +550,36 @@ export function createRuntime(opts: RuntimeOptions): Runtime {
     if (store.getFlags().detector) {
       detector.start(config.detector.refreshMs);
     }
+    // Audit retention: once an hour, and one pass 60 s after start so a
+    // restarted backend with a full table starts shrinking it in this boot
+    // rather than an hour later. Never two passes at once.
+    if (auditRetention.enabled) {
+      let retentionBusy = false;
+      const sweep = () => {
+        if (retentionBusy) return;
+        retentionBusy = true;
+        void auditRetention
+          .run()
+          .catch((err) => {
+            store.audit({
+              actor: 'system',
+              action: 'audit_retention_error',
+              subject: 'retention',
+              detail: { error: err instanceof Error ? err.message : String(err) },
+              at: clock(),
+            });
+          })
+          .finally(() => {
+            retentionBusy = false;
+          });
+      };
+      const first = setTimeout(sweep, 60_000);
+      first.unref?.();
+      timers.push(first);
+      const t = setInterval(sweep, 60 * 60 * 1000);
+      t.unref?.();
+      timers.push(t);
+    }
     executor?.start();
     power?.start();
     alerts?.start();
@@ -612,6 +667,7 @@ export function createRuntime(opts: RuntimeOptions): Runtime {
     players,
     alerts,
     survival,
+    auditRetention,
     detector,
     server,
     startedAt,

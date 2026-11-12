@@ -6,6 +6,7 @@ import type { OrderRecord, Store } from '../store.js';
 import { evaluateGate, prefabForGrid as sharedPrefabForGrid, type CommsGate } from './gate.js';
 import { actionIntent, orderDecision, shipRoles, type RoleDecision } from './roles.js';
 import { getStandIn } from './standins.js';
+import { lookupOrderResult } from '../orderResults.js';
 import { getHull, selectHull, type SpawnMode } from './hulls.js';
 import type { FlightGate } from './simSpeed.js';
 import { aliveNodes, loadWorld, planetByName, type DemoWorld } from './world.js';
@@ -3572,14 +3573,15 @@ export class DemoExecutor {
 
   private pollGroundProbes(now: number): void {
     if (this.probes.size === 0) return;
-    for (const entry of this.store().listOrderResults(120)) {
-      const detail = entry.detail as { eventType?: string; data?: { orderId?: string; result?: unknown } };
-      if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result') continue;
-      const orderId = detail.data?.orderId;
-      if (!orderId) continue;
+    // One probe at a time, looked up by id: the result is on the order-result
+    // bus (memory), not in the audit window, and a 120-row scan per tick is
+    // the scan this replaces.
+    for (const orderId of [...this.probes.keys()]) {
       const record = this.probes.get(orderId);
       if (!record) continue;
-      const result = (detail.data?.result ?? {}) as {
+      const hit = lookupOrderResult(this.store(), orderId);
+      if (!hit) continue;
+      const result = (hit.result ?? {}) as {
         hit?: boolean;
         isGrid?: boolean;
         position?: Vec3;
@@ -8983,14 +8985,9 @@ export class DemoExecutor {
   }
 
   private resultFor(orderId: string): { ok?: boolean; error?: string; result?: unknown } | null {
-    const entries = this.store().listOrderResults(500);
-    for (const entry of entries) {
-      const detail = entry.detail as { eventType?: string; data?: { orderId?: string } };
-      if (entry.action !== 'plugin_event' || detail?.eventType !== 'order_result') continue;
-      const data = detail.data as { orderId?: string; ok?: boolean; error?: string; result?: unknown };
-      if (data?.orderId === orderId) return data;
-    }
-    return null;
+    const hit = lookupOrderResult(this.store(), orderId);
+    if (!hit) return null;
+    return hit;
   }
 
   /**
