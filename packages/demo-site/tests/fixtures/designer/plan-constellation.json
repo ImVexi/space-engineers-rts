@@ -1,0 +1,1485 @@
+{
+  "options": [
+    {
+      "id": "ring-18",
+      "pattern": "ring",
+      "hullId": "owner-eagle",
+      "count": 18,
+      "altitudeM": 60000.0,
+      "positions": [
+        {
+          "id": "slot-0",
+          "x": 119400.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-1",
+          "x": 112199.3,
+          "y": 0.0,
+          "z": 40837.2
+        },
+        {
+          "id": "slot-2",
+          "x": 91465.7,
+          "y": 0.0,
+          "z": 76748.8
+        },
+        {
+          "id": "slot-3",
+          "x": 59700.0,
+          "y": 0.0,
+          "z": 103403.4
+        },
+        {
+          "id": "slot-4",
+          "x": 20733.6,
+          "y": 0.0,
+          "z": 117586.0
+        },
+        {
+          "id": "slot-5",
+          "x": -20733.6,
+          "y": 0.0,
+          "z": 117586.0
+        },
+        {
+          "id": "slot-6",
+          "x": -59700.0,
+          "y": 0.0,
+          "z": 103403.4
+        },
+        {
+          "id": "slot-7",
+          "x": -91465.7,
+          "y": 0.0,
+          "z": 76748.8
+        },
+        {
+          "id": "slot-8",
+          "x": -112199.3,
+          "y": 0.0,
+          "z": 40837.2
+        },
+        {
+          "id": "slot-9",
+          "x": -119400.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-10",
+          "x": -112199.3,
+          "y": -0.0,
+          "z": -40837.2
+        },
+        {
+          "id": "slot-11",
+          "x": -91465.7,
+          "y": -0.0,
+          "z": -76748.8
+        },
+        {
+          "id": "slot-12",
+          "x": -59700.0,
+          "y": -0.0,
+          "z": -103403.4
+        },
+        {
+          "id": "slot-13",
+          "x": -20733.6,
+          "y": -0.0,
+          "z": -117586.0
+        },
+        {
+          "id": "slot-14",
+          "x": 20733.6,
+          "y": -0.0,
+          "z": -117586.0
+        },
+        {
+          "id": "slot-15",
+          "x": 59700.0,
+          "y": -0.0,
+          "z": -103403.4
+        },
+        {
+          "id": "slot-16",
+          "x": 91465.7,
+          "y": -0.0,
+          "z": -76748.8
+        },
+        {
+          "id": "slot-17",
+          "x": 112199.3,
+          "y": -0.0,
+          "z": -40837.2
+        }
+      ],
+      "links": [
+        {
+          "a": "slot-0",
+          "b": "slot-1",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-1",
+          "b": "slot-2",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-2",
+          "b": "slot-3",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-3",
+          "b": "slot-4",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-4",
+          "b": "slot-5",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-5",
+          "b": "slot-6",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-6",
+          "b": "slot-7",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-7",
+          "b": "slot-8",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-8",
+          "b": "slot-9",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-9",
+          "b": "slot-10",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-10",
+          "b": "slot-11",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-11",
+          "b": "slot-12",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-12",
+          "b": "slot-13",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-13",
+          "b": "slot-14",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-14",
+          "b": "slot-15",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-15",
+          "b": "slot-16",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-16",
+          "b": "slot-17",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-17",
+          "b": "slot-0",
+          "kind": "radio",
+          "lengthM": 41467.2
+        }
+      ],
+      "spofs": [
+        "slot-0",
+        "slot-1",
+        "slot-2",
+        "slot-3",
+        "slot-4",
+        "slot-5",
+        "slot-6",
+        "slot-7",
+        "slot-8",
+        "slot-9",
+        "slot-10",
+        "slot-11",
+        "slot-12",
+        "slot-13",
+        "slot-14",
+        "slot-15",
+        "slot-16",
+        "slot-17"
+      ],
+      "redundancyAchieved": 1,
+      "coveragePct": 100.0,
+      "maxGapM": 41467.2,
+      "gravityAtSlotMps2": 2.86,
+      "feasible": true,
+      "reasons": [],
+      "summary": "18 slots on one equatorial ring at 60 km: 41.7 km neighbour gaps fit radio 50 km at 90% margin; single path.",
+      "labels": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "inclined-36",
+      "pattern": "inclined-rings",
+      "hullId": "owner-eagle",
+      "count": 36,
+      "altitudeM": 60000.0,
+      "positions": [
+        {
+          "id": "slot-0",
+          "x": 119400.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-1",
+          "x": 112199.3,
+          "y": 0.0,
+          "z": 40837.2
+        },
+        {
+          "id": "slot-2",
+          "x": 91465.7,
+          "y": 0.0,
+          "z": 76748.8
+        },
+        {
+          "id": "slot-3",
+          "x": 59700.0,
+          "y": 0.0,
+          "z": 103403.4
+        },
+        {
+          "id": "slot-4",
+          "x": 20733.6,
+          "y": 0.0,
+          "z": 117586.0
+        },
+        {
+          "id": "slot-5",
+          "x": -20733.6,
+          "y": 0.0,
+          "z": 117586.0
+        },
+        {
+          "id": "slot-6",
+          "x": -59700.0,
+          "y": 0.0,
+          "z": 103403.4
+        },
+        {
+          "id": "slot-7",
+          "x": -91465.7,
+          "y": 0.0,
+          "z": 76748.8
+        },
+        {
+          "id": "slot-8",
+          "x": -112199.3,
+          "y": 0.0,
+          "z": 40837.2
+        },
+        {
+          "id": "slot-9",
+          "x": -119400.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-10",
+          "x": -112199.3,
+          "y": -0.0,
+          "z": -40837.2
+        },
+        {
+          "id": "slot-11",
+          "x": -91465.7,
+          "y": -0.0,
+          "z": -76748.8
+        },
+        {
+          "id": "slot-12",
+          "x": -59700.0,
+          "y": -0.0,
+          "z": -103403.4
+        },
+        {
+          "id": "slot-13",
+          "x": -20733.6,
+          "y": -0.0,
+          "z": -117586.0
+        },
+        {
+          "id": "slot-14",
+          "x": 20733.6,
+          "y": -0.0,
+          "z": -117586.0
+        },
+        {
+          "id": "slot-15",
+          "x": 59700.0,
+          "y": -0.0,
+          "z": -103403.4
+        },
+        {
+          "id": "slot-16",
+          "x": 91465.7,
+          "y": -0.0,
+          "z": -76748.8
+        },
+        {
+          "id": "slot-17",
+          "x": 112199.3,
+          "y": -0.0,
+          "z": -40837.2
+        },
+        {
+          "id": "slot-18",
+          "x": 117586.0,
+          "y": 17955.8,
+          "z": 10366.8
+        },
+        {
+          "id": "slot-19",
+          "x": 103403.4,
+          "y": 51701.7,
+          "z": 29850.0
+        },
+        {
+          "id": "slot-20",
+          "x": 76748.8,
+          "y": 79211.6,
+          "z": 45732.9
+        },
+        {
+          "id": "slot-21",
+          "x": 40837.2,
+          "y": 97167.4,
+          "z": 56099.6
+        },
+        {
+          "id": "slot-22",
+          "x": 0.0,
+          "y": 103403.4,
+          "z": 59700.0
+        },
+        {
+          "id": "slot-23",
+          "x": -40837.2,
+          "y": 97167.4,
+          "z": 56099.6
+        },
+        {
+          "id": "slot-24",
+          "x": -76748.8,
+          "y": 79211.6,
+          "z": 45732.9
+        },
+        {
+          "id": "slot-25",
+          "x": -103403.4,
+          "y": 51701.7,
+          "z": 29850.0
+        },
+        {
+          "id": "slot-26",
+          "x": -117586.0,
+          "y": 17955.8,
+          "z": 10366.8
+        },
+        {
+          "id": "slot-27",
+          "x": -117586.0,
+          "y": -17955.8,
+          "z": -10366.8
+        },
+        {
+          "id": "slot-28",
+          "x": -103403.4,
+          "y": -51701.7,
+          "z": -29850.0
+        },
+        {
+          "id": "slot-29",
+          "x": -76748.8,
+          "y": -79211.6,
+          "z": -45732.9
+        },
+        {
+          "id": "slot-30",
+          "x": -40837.2,
+          "y": -97167.4,
+          "z": -56099.6
+        },
+        {
+          "id": "slot-31",
+          "x": -0.0,
+          "y": -103403.4,
+          "z": -59700.0
+        },
+        {
+          "id": "slot-32",
+          "x": 40837.2,
+          "y": -97167.4,
+          "z": -56099.6
+        },
+        {
+          "id": "slot-33",
+          "x": 76748.8,
+          "y": -79211.6,
+          "z": -45732.9
+        },
+        {
+          "id": "slot-34",
+          "x": 103403.4,
+          "y": -51701.7,
+          "z": -29850.0
+        },
+        {
+          "id": "slot-35",
+          "x": 117586.0,
+          "y": -17955.8,
+          "z": -10366.8
+        }
+      ],
+      "links": [
+        {
+          "a": "slot-0",
+          "b": "slot-1",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-1",
+          "b": "slot-2",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-2",
+          "b": "slot-3",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-3",
+          "b": "slot-4",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-4",
+          "b": "slot-5",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-5",
+          "b": "slot-6",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-6",
+          "b": "slot-7",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-7",
+          "b": "slot-8",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-8",
+          "b": "slot-9",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-9",
+          "b": "slot-10",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-10",
+          "b": "slot-11",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-11",
+          "b": "slot-12",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-12",
+          "b": "slot-13",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-13",
+          "b": "slot-14",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-14",
+          "b": "slot-15",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-15",
+          "b": "slot-16",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-16",
+          "b": "slot-17",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-17",
+          "b": "slot-0",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-18",
+          "b": "slot-19",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-19",
+          "b": "slot-20",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-20",
+          "b": "slot-21",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-21",
+          "b": "slot-22",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-22",
+          "b": "slot-23",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-23",
+          "b": "slot-24",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-24",
+          "b": "slot-25",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-25",
+          "b": "slot-26",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-26",
+          "b": "slot-27",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-27",
+          "b": "slot-28",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-28",
+          "b": "slot-29",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-29",
+          "b": "slot-30",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-30",
+          "b": "slot-31",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-31",
+          "b": "slot-32",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-32",
+          "b": "slot-33",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-33",
+          "b": "slot-34",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-34",
+          "b": "slot-35",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-35",
+          "b": "slot-18",
+          "kind": "radio",
+          "lengthM": 41467.2
+        }
+      ],
+      "spofs": [],
+      "redundancyAchieved": 2,
+      "coveragePct": 100.0,
+      "maxGapM": 41467.2,
+      "gravityAtSlotMps2": 2.86,
+      "feasible": true,
+      "reasons": [],
+      "summary": "Two inclined rings of 18 slots: a second ring is node-disjoint from the first, so any one slot can fail.",
+      "labels": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "shell-54",
+      "pattern": "shell",
+      "hullId": "owner-eagle",
+      "count": 54,
+      "altitudeM": 60000.0,
+      "positions": [
+        {
+          "id": "slot-0",
+          "x": 119400.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-1",
+          "x": 112199.3,
+          "y": 0.0,
+          "z": 40837.2
+        },
+        {
+          "id": "slot-2",
+          "x": 91465.7,
+          "y": 0.0,
+          "z": 76748.8
+        },
+        {
+          "id": "slot-3",
+          "x": 59700.0,
+          "y": 0.0,
+          "z": 103403.4
+        },
+        {
+          "id": "slot-4",
+          "x": 20733.6,
+          "y": 0.0,
+          "z": 117586.0
+        },
+        {
+          "id": "slot-5",
+          "x": -20733.6,
+          "y": 0.0,
+          "z": 117586.0
+        },
+        {
+          "id": "slot-6",
+          "x": -59700.0,
+          "y": 0.0,
+          "z": 103403.4
+        },
+        {
+          "id": "slot-7",
+          "x": -91465.7,
+          "y": 0.0,
+          "z": 76748.8
+        },
+        {
+          "id": "slot-8",
+          "x": -112199.3,
+          "y": 0.0,
+          "z": 40837.2
+        },
+        {
+          "id": "slot-9",
+          "x": -119400.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-10",
+          "x": -112199.3,
+          "y": -0.0,
+          "z": -40837.2
+        },
+        {
+          "id": "slot-11",
+          "x": -91465.7,
+          "y": -0.0,
+          "z": -76748.8
+        },
+        {
+          "id": "slot-12",
+          "x": -59700.0,
+          "y": -0.0,
+          "z": -103403.4
+        },
+        {
+          "id": "slot-13",
+          "x": -20733.6,
+          "y": -0.0,
+          "z": -117586.0
+        },
+        {
+          "id": "slot-14",
+          "x": 20733.6,
+          "y": -0.0,
+          "z": -117586.0
+        },
+        {
+          "id": "slot-15",
+          "x": 59700.0,
+          "y": -0.0,
+          "z": -103403.4
+        },
+        {
+          "id": "slot-16",
+          "x": 91465.7,
+          "y": -0.0,
+          "z": -76748.8
+        },
+        {
+          "id": "slot-17",
+          "x": 112199.3,
+          "y": -0.0,
+          "z": -40837.2
+        },
+        {
+          "id": "slot-18",
+          "x": 117586.0,
+          "y": 13327.3,
+          "z": 15882.9
+        },
+        {
+          "id": "slot-19",
+          "x": 103403.4,
+          "y": 38374.4,
+          "z": 45732.9
+        },
+        {
+          "id": "slot-20",
+          "x": 76748.8,
+          "y": 58793.0,
+          "z": 70066.8
+        },
+        {
+          "id": "slot-21",
+          "x": 40837.2,
+          "y": 72120.3,
+          "z": 85949.6
+        },
+        {
+          "id": "slot-22",
+          "x": 0.0,
+          "y": 76748.8,
+          "z": 91465.7
+        },
+        {
+          "id": "slot-23",
+          "x": -40837.2,
+          "y": 72120.3,
+          "z": 85949.6
+        },
+        {
+          "id": "slot-24",
+          "x": -76748.8,
+          "y": 58793.0,
+          "z": 70066.8
+        },
+        {
+          "id": "slot-25",
+          "x": -103403.4,
+          "y": 38374.4,
+          "z": 45732.9
+        },
+        {
+          "id": "slot-26",
+          "x": -117586.0,
+          "y": 13327.3,
+          "z": 15882.9
+        },
+        {
+          "id": "slot-27",
+          "x": -117586.0,
+          "y": -13327.3,
+          "z": -15882.9
+        },
+        {
+          "id": "slot-28",
+          "x": -103403.4,
+          "y": -38374.4,
+          "z": -45732.9
+        },
+        {
+          "id": "slot-29",
+          "x": -76748.8,
+          "y": -58793.0,
+          "z": -70066.8
+        },
+        {
+          "id": "slot-30",
+          "x": -40837.2,
+          "y": -72120.3,
+          "z": -85949.6
+        },
+        {
+          "id": "slot-31",
+          "x": -0.0,
+          "y": -76748.8,
+          "z": -91465.7
+        },
+        {
+          "id": "slot-32",
+          "x": 40837.2,
+          "y": -72120.3,
+          "z": -85949.6
+        },
+        {
+          "id": "slot-33",
+          "x": 76748.8,
+          "y": -58793.0,
+          "z": -70066.8
+        },
+        {
+          "id": "slot-34",
+          "x": 103403.4,
+          "y": -38374.4,
+          "z": -45732.9
+        },
+        {
+          "id": "slot-35",
+          "x": 117586.0,
+          "y": -13327.3,
+          "z": -15882.9
+        },
+        {
+          "id": "slot-36",
+          "x": 112199.3,
+          "y": -26249.6,
+          "z": 31283.1
+        },
+        {
+          "id": "slot-37",
+          "x": 91465.7,
+          "y": -49333.2,
+          "z": 58793.0
+        },
+        {
+          "id": "slot-38",
+          "x": 59700.0,
+          "y": -66466.4,
+          "z": 79211.6
+        },
+        {
+          "id": "slot-39",
+          "x": 20733.6,
+          "y": -75582.9,
+          "z": 90076.1
+        },
+        {
+          "id": "slot-40",
+          "x": -20733.6,
+          "y": -75582.9,
+          "z": 90076.1
+        },
+        {
+          "id": "slot-41",
+          "x": -59700.0,
+          "y": -66466.4,
+          "z": 79211.6
+        },
+        {
+          "id": "slot-42",
+          "x": -91465.7,
+          "y": -49333.2,
+          "z": 58793.0
+        },
+        {
+          "id": "slot-43",
+          "x": -112199.3,
+          "y": -26249.6,
+          "z": 31283.1
+        },
+        {
+          "id": "slot-44",
+          "x": -119400.0,
+          "y": -0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-45",
+          "x": -112199.3,
+          "y": 26249.6,
+          "z": -31283.1
+        },
+        {
+          "id": "slot-46",
+          "x": -91465.7,
+          "y": 49333.2,
+          "z": -58793.0
+        },
+        {
+          "id": "slot-47",
+          "x": -59700.0,
+          "y": 66466.4,
+          "z": -79211.6
+        },
+        {
+          "id": "slot-48",
+          "x": -20733.6,
+          "y": 75582.9,
+          "z": -90076.1
+        },
+        {
+          "id": "slot-49",
+          "x": 20733.6,
+          "y": 75582.9,
+          "z": -90076.1
+        },
+        {
+          "id": "slot-50",
+          "x": 59700.0,
+          "y": 66466.4,
+          "z": -79211.6
+        },
+        {
+          "id": "slot-51",
+          "x": 91465.7,
+          "y": 49333.2,
+          "z": -58793.0
+        },
+        {
+          "id": "slot-52",
+          "x": 112199.3,
+          "y": 26249.6,
+          "z": -31283.1
+        },
+        {
+          "id": "slot-53",
+          "x": 119400.0,
+          "y": 0.0,
+          "z": -0.0
+        }
+      ],
+      "links": [
+        {
+          "a": "slot-0",
+          "b": "slot-1",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-1",
+          "b": "slot-2",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-2",
+          "b": "slot-3",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-3",
+          "b": "slot-4",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-4",
+          "b": "slot-5",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-5",
+          "b": "slot-6",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-6",
+          "b": "slot-7",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-7",
+          "b": "slot-8",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-8",
+          "b": "slot-9",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-9",
+          "b": "slot-10",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-10",
+          "b": "slot-11",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-11",
+          "b": "slot-12",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-12",
+          "b": "slot-13",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-13",
+          "b": "slot-14",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-14",
+          "b": "slot-15",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-15",
+          "b": "slot-16",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-16",
+          "b": "slot-17",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-17",
+          "b": "slot-0",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-18",
+          "b": "slot-19",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-19",
+          "b": "slot-20",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-20",
+          "b": "slot-21",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-21",
+          "b": "slot-22",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-22",
+          "b": "slot-23",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-23",
+          "b": "slot-24",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-24",
+          "b": "slot-25",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-25",
+          "b": "slot-26",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-26",
+          "b": "slot-27",
+          "kind": "radio",
+          "lengthM": 41467.3
+        },
+        {
+          "a": "slot-27",
+          "b": "slot-28",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-28",
+          "b": "slot-29",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-29",
+          "b": "slot-30",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-30",
+          "b": "slot-31",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-31",
+          "b": "slot-32",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-32",
+          "b": "slot-33",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-33",
+          "b": "slot-34",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-34",
+          "b": "slot-35",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-35",
+          "b": "slot-18",
+          "kind": "radio",
+          "lengthM": 41467.3
+        },
+        {
+          "a": "slot-36",
+          "b": "slot-37",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-37",
+          "b": "slot-38",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-38",
+          "b": "slot-39",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-39",
+          "b": "slot-40",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-40",
+          "b": "slot-41",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-41",
+          "b": "slot-42",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-42",
+          "b": "slot-43",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-43",
+          "b": "slot-44",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-44",
+          "b": "slot-45",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-45",
+          "b": "slot-46",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-46",
+          "b": "slot-47",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-47",
+          "b": "slot-48",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-48",
+          "b": "slot-49",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-49",
+          "b": "slot-50",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-50",
+          "b": "slot-51",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-51",
+          "b": "slot-52",
+          "kind": "radio",
+          "lengthM": 41467.2
+        },
+        {
+          "a": "slot-52",
+          "b": "slot-53",
+          "kind": "radio",
+          "lengthM": 41467.1
+        },
+        {
+          "a": "slot-53",
+          "b": "slot-36",
+          "kind": "radio",
+          "lengthM": 41467.1
+        }
+      ],
+      "spofs": [],
+      "redundancyAchieved": "no-spof",
+      "coveragePct": 100.0,
+      "maxGapM": 41467.3,
+      "gravityAtSlotMps2": 2.86,
+      "feasible": true,
+      "reasons": [],
+      "summary": "Three shells of 18 slots: each shell is 2-connected and no single slot is a cut vertex.",
+      "labels": [
+        "SIMULATED"
+      ]
+    },
+    {
+      "id": "chain-6",
+      "pattern": "chain",
+      "hullId": "prefab-eradicator",
+      "count": 6,
+      "altitudeM": 60000.0,
+      "positions": [
+        {
+          "id": "slot-0",
+          "x": 179100.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-1",
+          "x": 89550.0,
+          "y": 0.0,
+          "z": 155105.1
+        },
+        {
+          "id": "slot-2",
+          "x": -89550.0,
+          "y": 0.0,
+          "z": 155105.1
+        },
+        {
+          "id": "slot-3",
+          "x": -179100.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "id": "slot-4",
+          "x": -89550.0,
+          "y": -0.0,
+          "z": -155105.1
+        },
+        {
+          "id": "slot-5",
+          "x": 89550.0,
+          "y": -0.0,
+          "z": -155105.1
+        }
+      ],
+      "links": [
+        {
+          "a": "slot-0",
+          "b": "slot-1",
+          "kind": "radio",
+          "lengthM": 179100.0
+        },
+        {
+          "a": "slot-1",
+          "b": "slot-2",
+          "kind": "radio",
+          "lengthM": 179100.0
+        },
+        {
+          "a": "slot-2",
+          "b": "slot-3",
+          "kind": "radio",
+          "lengthM": 179100.0
+        },
+        {
+          "a": "slot-3",
+          "b": "slot-4",
+          "kind": "radio",
+          "lengthM": 179100.0
+        },
+        {
+          "a": "slot-4",
+          "b": "slot-5",
+          "kind": "radio",
+          "lengthM": 179100.0
+        },
+        {
+          "a": "slot-5",
+          "b": "slot-0",
+          "kind": "radio",
+          "lengthM": 179100.0
+        }
+      ],
+      "spofs": [],
+      "redundancyAchieved": 1,
+      "coveragePct": 41.7,
+      "maxGapM": 179100.0,
+      "gravityAtSlotMps2": 0.0,
+      "feasible": false,
+      "reasons": [
+        "Ion-only hull cannot climb from the surface (TWR 0.42 at 0 m)",
+        "1 gap (179.1 km) is above the 90% radio margin"
+      ],
+      "summary": "Chain of 6 along one arc: cheapest count, but no redundancy and it cannot launch from the ground.",
+      "labels": [
+        "SIMULATED"
+      ]
+    }
+  ],
+  "labels": [
+    "SIMULATED"
+  ]
+}

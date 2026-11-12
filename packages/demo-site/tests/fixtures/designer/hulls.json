@@ -1,0 +1,52 @@
+{
+  "hulls": [
+    {
+      "id": "owner-eagle",
+      "source": "owner-tagged",
+      "name": "[HERMES-TEST] Eagle Stand-in",
+      "radioRangeM": 50000,
+      "laserCount": 1,
+      "thrust": {
+        "atmo": 420,
+        "ion": 180,
+        "h2": 0
+      },
+      "canGroundLaunch": true,
+      "twrAtSurface": 1.42,
+      "notes": "owner-placed Creative grid"
+    },
+    {
+      "id": "prefab-eradicator",
+      "source": "prefab",
+      "name": "Eradicator_mk.1",
+      "radioRangeM": 50000,
+      "laserCount": 0,
+      "thrust": {
+        "atmo": 0,
+        "ion": 260,
+        "h2": 0
+      },
+      "canGroundLaunch": false,
+      "twrAtSurface": 0.42,
+      "notes": "ion only"
+    },
+    {
+      "id": "prefab-large-control",
+      "source": "prefab",
+      "name": "Large Control Drone",
+      "radioRangeM": 1000,
+      "laserCount": 0,
+      "thrust": {
+        "atmo": 140,
+        "ion": 90,
+        "h2": 0
+      },
+      "canGroundLaunch": "unknown",
+      "twrAtSurface": null,
+      "notes": "radio 1 km"
+    }
+  ],
+  "labels": [
+    "SIMULATED"
+  ]
+}

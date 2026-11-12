@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+dist-prev/
+dist-next/
+packages/demo-site/dist/
+deploy/plugin-out/
+plugin/**/bin/
+plugin/**/obj/
+*.dll
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# Test output
+coverage/
+scenarios/results/
+
+# Runtime data: never committed
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.log
+logs/
+snapshots/
+*.tgz
+*.zip
+__pycache__/
+*.pyc
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+plugin.json
+*.token
+token.env
+remote.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.tmp/
+tmp/

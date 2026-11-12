@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>LandMathTests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Both pure math files are shared with the plugin: no game references. -->
+    <Compile Include="../../src/LandMath.cs" Link="LandMath.cs" />
+    <Compile Include="../../src/LevelMath.cs" Link="LevelMath.cs" />
+    <!-- The dampener dead-man is pure C# too: same file, same tests. -->
+    <Compile Include="../../src/DampenerDeadman.cs" Link="DampenerDeadman.cs" />
+    <!-- Survival station conversion rule (dampeners, never a zeroing). -->
+    <Compile Include="../../src/StationMath.cs" Link="StationMath.cs" />
+  </ItemGroup>
+</Project>

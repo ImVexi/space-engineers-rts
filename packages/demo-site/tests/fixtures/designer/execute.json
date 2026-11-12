@@ -1,0 +1,19 @@
+{
+  "missionId": "m-designer-fixture",
+  "optionId": "ring-18",
+  "launch": "orbital",
+  "mission": {
+    "id": "m-designer-fixture",
+    "status": "approved",
+    "type": "designer-launch"
+  },
+  "execution": {
+    "status": "running",
+    "scaled": true,
+    "note": "SCALED to the active cap"
+  },
+  "labels": [
+    "SIMULATED",
+    "SCALED"
+  ]
+}

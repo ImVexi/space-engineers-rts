@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>LevelMathTests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The pure math file is shared with the plugin: no game references. -->
+    <Compile Include="../../src/LevelMath.cs" Link="LevelMath.cs" />
+  </ItemGroup>
+</Project>

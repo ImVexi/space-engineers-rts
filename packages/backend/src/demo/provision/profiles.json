@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "owner": {
+    "steamId": "10000000000000001",
+    "identityId": "144115188075855926",
+    "note": "Owner (the owner). A tagged grid whose BigOwners do not include this identity is never touched."
+  },
+  "tags": {
+    "BASE": "[HERMES-BASE]",
+    "DRONE": "[HERMES-TEST]"
+  },
+  "enums": {},
+  "profiles": {
+    "BASE": {
+      "description": "Control station: radio antennas broadcast at the block's own maximum radius; laser antennas stay idle/off until a link is planned.",
+      "steps": [
+        {
+          "name": "radio antennas broadcasting at max radius",
+          "filter": { "type": "RadioAntenna" },
+          "props": { "OnOff": true, "EnableBroadCast": true, "Radius": "$max" }
+        },
+        {
+          "name": "laser antennas idle (off until a link is planned)",
+          "filter": { "type": "LaserAntenna" },
+          "props": { "OnOff": false }
+        },
+        {
+          "name": "batteries on auto",
+          "filter": { "type": "Battery" },
+          "props": { "OnOff": true },
+          "actions": ["Auto"]
+        }
+      ]
+    },
+    "DRONE": {
+      "description": "Drone / satellite hull: radio antennas broadcast at max radius, laser antennas idle, Remote Control ready but autopilot off, collision avoidance and dampeners on, batteries Auto, thrusters and gyros on, built-in AI / event / timer blocks off.",
+      "steps": [
+        {
+          "name": "radio antennas broadcasting at max radius",
+          "filter": { "type": "RadioAntenna" },
+          "props": { "OnOff": true, "EnableBroadCast": true, "Radius": "$max" }
+        },
+        {
+          "name": "laser antennas idle (off until a link is planned)",
+          "filter": { "type": "LaserAntenna" },
+          "props": { "OnOff": false }
+        },
+        {
+          "name": "remote control: autopilot off, collision avoidance on, dampeners on",
+          "filter": { "type": "RemoteControl" },
+          "props": {
+            "AutoPilot": false,
+            "CollisionAvoidance": true,
+            "DampenersOverride": true,
+            "ControlThrusters": true,
+            "ControlWheels": true
+          }
+        },
+        {
+          "name": "batteries on auto",
+          "filter": { "type": "Battery" },
+          "props": { "OnOff": true },
+          "actions": ["Auto"]
+        },
+        { "name": "thrusters on", "filter": { "type": "Thruster" }, "props": { "OnOff": true } },
+        { "name": "gyros on", "filter": { "type": "Gyro" }, "props": { "OnOff": true } },
+        { "name": "built-in AI off (programmable block)", "filter": { "type": "ProgrammableBlock" }, "props": { "OnOff": false } },
+        { "name": "timers off", "filter": { "subtype": "TimerBlock" }, "props": { "OnOff": false } },
+        { "name": "event controllers off", "filter": { "subtype": "EventControllerBlock" }, "props": { "OnOff": false } },
+        { "name": "AI flight blocks off", "filter": { "subtype": "FlightMovementBlock" }, "props": { "OnOff": false } },
+        { "name": "AI combat blocks off", "filter": { "subtype": "DefensiveCombatBlock" }, "props": { "OnOff": false } },
+        { "name": "AI combat blocks off", "filter": { "subtype": "OffensiveCombatBlock" }, "props": { "OnOff": false } },
+        { "name": "AI mission autopilot off", "filter": { "subtype": "BasicMissionAutopilot" }, "props": { "OnOff": false } }
+      ]
+    }
+  }
+}

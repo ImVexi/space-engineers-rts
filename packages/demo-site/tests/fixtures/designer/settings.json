@@ -1,0 +1,8 @@
+{
+  "simSpeedMin": 0.95,
+  "maxActive": 5,
+  "liveSimSpeed": 1.02,
+  "labels": [
+    "SIMULATED"
+  ]
+}

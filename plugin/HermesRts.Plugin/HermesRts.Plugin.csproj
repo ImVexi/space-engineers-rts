@@ -1,0 +1,91 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <AssemblyName>HermesRts.Plugin</AssemblyName>
+    <RootNamespace>HermesRts.Plugin</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>portable</DebugType>
+    <!--
+      References come ONLY from the explicit HintPaths below (SE_DS_BIN) and
+      from the framework directory. Without this the SDK's assembly search also
+      walks the project tree, finds the net8 test projects' output
+      (`tests/block-filter/bin/**/Newtonsoft.Json.dll`, built for .NET 6) and
+      fails the net48 compile with
+      CS1705: ... uses 'System.Runtime, Version=6.0.0.0' ...
+      Measured 2026-11-11: the build succeeded only after deleting that bin/.
+    -->
+    <AssemblySearchPaths>{HintPathFromItem};{TargetFrameworkDirectory};{RawFileName}</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!--
+    Set SE_DS_BIN to your own DedicatedServer64 directory before building:
+      dotnet build -c Release -p:SE_DS_BIN=/path/to/DedicatedServer64
+    No game DLLs are committed to this repository (they are not
+    redistributable); see the install guide in the repository README.
+  -->
+  <!-- The offline control-law tests live under tests/ (net8.0); keep them out
+       of the net48 plugin compile. -->
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+  </ItemGroup>
+
+  <!-- net48 targeting pack on Linux: NuGet reference assemblies, build-only. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="VRage">
+      <HintPath>$(SE_DS_BIN)\VRage.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sandbox.Game">
+      <HintPath>$(SE_DS_BIN)\Sandbox.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sandbox.Common">
+      <HintPath>$(SE_DS_BIN)\Sandbox.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VRage.Game">
+      <HintPath>$(SE_DS_BIN)\VRage.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VRage.Library">
+      <HintPath>$(SE_DS_BIN)\VRage.Library.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VRage.Math">
+      <HintPath>$(SE_DS_BIN)\VRage.Math.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VRage.Scripting">
+      <HintPath>$(SE_DS_BIN)\VRage.Scripting.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SpaceEngineers.Game">
+      <HintPath>$(SE_DS_BIN)\SpaceEngineers.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SpaceEngineers.ObjectBuilders">
+      <HintPath>$(SE_DS_BIN)\SpaceEngineers.ObjectBuilders.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(SE_DS_BIN)\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="netstandard">
+      <HintPath>$(SE_DS_BIN)\netstandard.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="RequireSeDsBin" BeforeTargets="ResolveAssemblyReferences" Condition="'$(SE_DS_BIN)' == ''">
+    <Error Text="SE_DS_BIN is not set. Point it at the DedicatedServer64 directory that contains Sandbox.Game.dll." />
+  </Target>
+
+</Project>

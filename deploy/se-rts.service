@@ -1,0 +1,49 @@
+# se-rts backend: survival instance on a LAN.
+#
+# Copy to e.g. /etc/systemd/system/se-rts.service, adjust the paths, then:
+#   systemctl daemon-reload && systemctl enable --now se-rts
+#
+# The secret lives in an EnvironmentFile outside the repository, mode 0600:
+#   RTS_TOKEN=<32+ random chars>
+#
+# There is deliberately NO RTS_TEST_SERVER_MARKER line: that pair is what marks
+# a test world, and `RTS_ENV=live` refuses to boot with it set.
+
+[Unit]
+Description=space-engineers-rts control backend (survival, LAN-only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/space-engineers-rts
+EnvironmentFile=/etc/se-rts/token.env
+Environment=RTS_ENV=live
+Environment=RTS_DEMO=1
+Environment=RTS_DEMO_SURVIVAL=1
+# demo_execute is not auto-enabled outside RTS_ENV=test, and it must be on for
+# the executor/survival loop to send any order at all.
+Environment=RTS_FLAGS=demo_execute
+# Bind to the LAN address, or 127.0.0.1 behind a local reverse proxy.
+Environment=RTS_BIND=0.0.0.0
+Environment=RTS_PORT=8761
+Environment=RTS_DATA_DIR=/var/lib/se-rts
+# Owner allow-list for automation. REQUIRED: with it empty nothing is owned.
+Environment=RTS_OWNER_STEAM_IDS=REPLACE_WITH_YOUR_STEAM_ID
+# Read-only copy of the world save for the handoff detector (optional).
+Environment=RTS_SAVE_DIR=/var/lib/se-rts/save
+Environment=NODE_ENV=production
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

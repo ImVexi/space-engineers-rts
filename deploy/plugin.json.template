@@ -1,0 +1,16 @@
+{
+  "backendUrl": "ws://<backend-host>:8761/plugin",
+  "token": "REPLACE_WITH_THE_SAME_TOKEN_AS_RTS_TOKEN",
+  "serverId": "se1",
+  "agentId": "hermes-plugin-1",
+  "ownerSteamIds": [
+    0
+  ],
+  "_ownerSteamIds_note": "Replace 0 with your own 64-bit Steam id. These are the grids the plugin reports and treats as yours; the backend's RTS_OWNER_STEAM_IDS must list the same ids.",
+  "factionTag": "",
+  "firmwarePath": "firmware/HermesFirmware.cs",
+  "isTestServer": false,
+  "telemetryIntervalSec": 2.0,
+  "safeModeAfterSec": 60.0,
+  "flags": "telemetry,handoff_detection,safe_mode,command_execution"
+}

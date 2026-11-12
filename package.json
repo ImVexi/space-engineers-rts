@@ -1,0 +1,47 @@
+{
+  "name": "space-engineers-rts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RTS-style automation for Space Engineers: survival-only server plugin, LAN control backend and web map",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "tsx packages/backend/src/index.ts",
+    "start": "tsx packages/backend/src/index.ts",
+    "fake-plugin": "tsx packages/backend/scripts/fake-plugin.ts",
+    "detect": "tsx packages/backend/scripts/detect.ts",
+    "profile": "tsx packages/backend/scripts/prefabs.ts",
+    "profile:save": "tsx packages/backend/scripts/profile.ts",
+    "plan": "tsx packages/backend/scripts/plan.ts",
+    "scenarios": "tsx scenarios/runner.ts",
+    "lint:firmware": "node firmware/tools/firmware-lint.mjs firmware/HermesFirmware.cs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "demo:dev": "node packages/demo-site/scripts/dev.mjs",
+    "demo:build": "npm --workspace @se-rts/demo-site run build",
+    "demo:test": "vitest run packages/demo-site/tests",
+    "demo:e2e": "bash scripts/demo-e2e.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/sax": "^1.2.7",
+    "@types/ws": "^8.5.13",
+    "@vitest/coverage-v8": "^2.1.4",
+    "fast-check": "^3.23.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/<owner>/space-engineers-rts.git"
+  }
+}
